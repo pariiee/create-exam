@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExamCoy - Portal Pendaftaran Akun Ujian
 
-## Getting Started
+Aplikasi web landing page modern menggunakan **Next.js** dan **Tailwind CSS** untuk pendaftaran akun ujian siswa. Data disimpan ke **Google Sheets**.
 
-First, run the development server:
+## Tech Stack
+
+- **Next.js 15** (App Router) — React Framework
+- **Tailwind CSS** — Styling (dark mode)
+- **Google Sheets API** — Database via `googleapis`
+- **Vercel** — Deployment
+
+## Fitur
+
+- Landing page modern dengan dark mode
+- Form pendaftaran akun ujian (Nama, NIS 5 digit, Kelas)
+- Check NIS untuk melihat status pendaftaran
+- Data otomatis sorted by NIS & auto-numbered
+- Data dikirim ke sheet yang sesuai (KELAS X / KELAS XI / KELAS XII)
+
+---
+
+## Instalasi Lokal
 
 ```bash
+# 1. Clone & install
+git clone <repo-url> cakunexam
+cd cakunexam
+npm install
+
+# 2. Setup environment
+cp .env.example .env.local
+# Edit .env.local dengan credentials Anda
+
+# 3. Jalankan dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup Google Service Account
 
-## Learn More
+### 1. Buat Project di Google Cloud Console
 
-To learn more about Next.js, take a look at the following resources:
+1. Buka [Google Cloud Console](https://console.cloud.google.com/)
+2. Klik **Select a project** > **New Project**
+3. Beri nama project (misal: `ExamCoy`) > **Create**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Aktifkan Google Sheets API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Buka **APIs & Services** > **Library**
+2. Cari **Google Sheets API** > klik **Enable**
 
-## Deploy on Vercel
+### 3. Buat Service Account
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Buka **APIs & Services** > **Credentials**
+2. Klik **Create Credentials** > **Service Account**
+3. Isi nama (misal: `examcoy-sheets`) > **Create and Continue**
+4. Role: **Editor** > **Continue** > **Done**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Download JSON Key
+
+1. Klik nama Service Account yang baru dibuat
+2. Tab **Keys** > **Add Key** > **Create new key** > **JSON** > **Create**
+3. File JSON akan terdownload
+
+### 5. Setup .env.local
+
+Buka file JSON yang terdownload, copy **seluruh isinya** sebagai satu baris ke `.env.local`:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project",...}
+GOOGLE_SHEET_ID=1o_yHFj-hWxMGnkMKtCfHPk-ixFFpZHtOqoMmOvnlDRI
+```
+
+> **Tip**: Buka file JSON, select all, lalu paste. Pastikan dalam satu baris.
+
+### 6. Share Google Sheet ke Service Account
+
+1. Dari file JSON, copy nilai `client_email`
+2. Buka Google Sheet > klik **Share**
+3. Paste email Service Account > beri akses **Editor** > **Send**
+
+### 7. Siapkan Google Sheet
+
+Pastikan Google Sheet memiliki 3 tab/sheet:
+- **KELAS X**
+- **KELAS XI**
+- **KELAS XII**
+
+Masing-masing tab beri header di baris pertama: `NO | NIS | NAMA | KELAS`
+
+---
+
+## Deploy ke Vercel
+
+1. Push repo ke GitHub
+2. Buka [vercel.com](https://vercel.com) > **New Project** > Import repo
+3. Di **Environment Variables**, tambahkan:
+   - `GOOGLE_SERVICE_ACCOUNT_JSON` = isi JSON service account (satu baris)
+   - `GOOGLE_SHEET_ID` = ID Google Sheet
+4. Klik **Deploy**
+
+---
+
+## API Routes
+
+| Method | URI | Deskripsi |
+|--------|-----|-----------|
+| POST | `/api/register-exam` | Simpan data ke Google Sheet |
+| POST | `/api/check-nis` | Cek NIS di semua sheet |
+
+---
+
+## License
+
+MIT

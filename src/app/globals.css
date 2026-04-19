@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #030712;
+  color: #f3f4f6;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9, #7dd3fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-border {
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3),
+              0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(3deg); }
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(15px) rotate(-2deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), 0 0 60px rgba(56, 189, 248, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), 0 0 80px rgba(56, 189, 248, 0.2); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 7s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.gradient-bg-cool {
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%);
+}
+
+.text-gradient-cool {
+  background: linear-gradient(135deg, #38bdf8, #7dd3fc, #e0f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Neon glow cards */
+.neon-card {
+  border-radius: 1.25rem;
+  padding: 2px;
+}
+
+.neon-card-sky {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9, #7dd3fc);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), 0 0 50px rgba(56, 189, 248, 0.08);
+  transition: box-shadow 0.5s;
+}
+.neon-card-sky:hover {
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.35), 0 0 60px rgba(56, 189, 248, 0.18);
+}
+
+.neon-card-cyan {
+  background: linear-gradient(135deg, #06b6d4, #22d3ee, #67e8f9);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 50px rgba(6, 182, 212, 0.08);
+  transition: box-shadow 0.5s;
+}
+.neon-card-cyan:hover {
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.35), 0 0 60px rgba(6, 182, 212, 0.18);
+}
+
+.neon-card-blue {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa, #93c5fd);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 50px rgba(59, 130, 246, 0.08);
+  transition: box-shadow 0.5s;
+}
+.neon-card-blue:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.35), 0 0 60px rgba(59, 130, 246, 0.18);
+}
+
+.neon-card-emerald {
+  background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 50px rgba(16, 185, 129, 0.08);
+  transition: box-shadow 0.5s;
+}
+.neon-card-emerald:hover {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.35), 0 0 60px rgba(16, 185, 129, 0.18);
+}
+
+.neon-card-inner {
+  background: #0a0f1a;
+  border-radius: calc(1.25rem - 2px);
+  padding: 2rem;
+  height: 100%;
+}
+
+/* Pelajar image gentle breathing animation */
+@keyframes breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.03) translateY(-6px); }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Slide down animation for filter chips */
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; transform: translateY(-8px); }
+  to { opacity: 1; max-height: 80px; transform: translateY(0); }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.25s ease-out forwards;
+}
+
+/* Hide scrollbar but allow scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 1rem;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-dialog:not([open]) {
+  display: none;
+}
+
+.modal-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
