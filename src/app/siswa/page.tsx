@@ -1,5 +1,7 @@
 "use client";
 
+import { safeJson } from "@/lib/safeFetch";
+
 import { useState, useEffect, useMemo } from "react";
 
 type Student = { no: string; nis: string; nama: string; kelas: string; sheet: string };
@@ -44,7 +46,7 @@ export default function SiswaPage() {
         const allStudents: Student[] = [];
         for (const sheet of SHEETS) {
           const res = await fetch(`/siswa/api?sheet=${encodeURIComponent(sheet)}`);
-          const data = await res.json();
+          const data = await safeJson(res);
           if (data.rows) {
             for (const row of data.rows) {
               allStudents.push({

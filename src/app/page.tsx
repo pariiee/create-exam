@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { kelasOptions } from "@/lib/kelas";
+import { safeJson } from "@/lib/safeFetch";
 
 type NisResult = { nama: string; nis: string; kelas: string };
 
@@ -96,7 +97,7 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/exam-info")
-      .then((r) => r.json())
+      .then((r) => safeJson(r))
       .then((d) => setDownloadApkUrl(d.url_download_apk || ""))
       .catch(() => {});
     fetchTotalUsers();
@@ -106,7 +107,7 @@ export default function Home() {
     fetch("/api/total-users")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
+        return safeJson(r);
       })
       .then((d) => {
         console.log("total-users response:", d);
@@ -160,7 +161,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(regForm),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         if (data.duplicate) {
           setDupInfo(data.duplicate);
@@ -190,7 +191,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nis: checkNis }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengecek NIS.");
       if (!data.found) {
         setCheckMsg({ type: "warning", text: data.message });

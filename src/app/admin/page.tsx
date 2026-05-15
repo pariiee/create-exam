@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { kelasOptions } from "@/lib/kelas";
+import { safeJson } from "@/lib/safeFetch";
 
 type Student = { no: string; nis: string; nama: string; kelas: string; sheet: string };
 
@@ -79,7 +80,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/settings", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (res.ok && data.settings) {
         setPinOut(data.settings.pin_out || "");
         setUrlUjian(data.settings.url_ujian || "");
@@ -110,7 +111,7 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Login gagal.");
       setToken(data.token);
       sessionStorage.setItem("admin_token", data.token);
@@ -135,7 +136,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ pin_out: pinOut, url_ujian: urlUjian, url_download_apk: urlDownloadApk }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan.");
       setSettingsMsg({ type: "success", text: data.message });
     } catch (err: unknown) {
@@ -157,7 +158,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/students", {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (res.ok && data.students) {
         setStudents(data.students);
       }
@@ -178,7 +179,7 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ nis: deleteConfirm.nis, sheet: deleteConfirm.sheet }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Gagal menghapus.");
       setStudentMsg({ type: "success", text: data.message });
       setDeleteConfirm(null);
@@ -207,7 +208,7 @@ export default function AdminPage() {
           kelas: editForm.kelas,
         }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan.");
       setStudentMsg({ type: "success", text: data.message });
       setEditStudent(null);
