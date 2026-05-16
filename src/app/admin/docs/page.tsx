@@ -64,7 +64,7 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
           { name: "nama", type: "string", required: true, desc: "Nama siswa" },
           { name: "kelas", type: "string", required: true, desc: "Kelas siswa" },
           { name: "sesi", type: "number", required: true, desc: "Nomor sesi (1 atau 2)" },
-          { name: "jenis", type: "string", required: true, desc: "KELUAR_APP | BLUETOOTH_AKTIF | HEADSET_TERDETEKSI | OVERLAY_TERDETEKSI" },
+          { name: "jenis", type: "string", required: true, desc: "KELUAR_APP | OVERLAY_TERDETEKSI" },
           { name: "alasan", type: "string", required: false, desc: "Keterangan tambahan" },
           { name: "foto_url", type: "string", required: false, desc: "URL bukti foto" },
         ],

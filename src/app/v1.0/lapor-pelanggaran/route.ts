@@ -44,7 +44,7 @@ async function ensurePelanggaranSheet() {
   }
 }
 
-const VALID_JENIS = ["KELUAR_APP", "BLUETOOTH_AKTIF", "HEADSET_TERDETEKSI", "OVERLAY_TERDETEKSI"];
+const VALID_JENIS = ["KELUAR_APP", "OVERLAY_TERDETEKSI"];
 
 export async function POST(request: NextRequest) {
   try {

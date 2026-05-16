@@ -16,8 +16,6 @@ type PelanggaranItem = {
 
 const JENIS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
   KELUAR_APP: { bg: "bg-red-500/15 border-red-500/30", text: "text-red-400", label: "Keluar App" },
-  BLUETOOTH_AKTIF: { bg: "bg-orange-500/15 border-orange-500/30", text: "text-orange-400", label: "Bluetooth" },
-  HEADSET_TERDETEKSI: { bg: "bg-yellow-500/15 border-yellow-500/30", text: "text-yellow-400", label: "Headset" },
   OVERLAY_TERDETEKSI: { bg: "bg-purple-500/15 border-purple-500/30", text: "text-purple-400", label: "Overlay" },
 };
 
@@ -145,7 +143,7 @@ export default function PelanggaranPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="glass-card rounded-xl p-4">
           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total</p>
           <p className="text-2xl font-bold text-white">{data.length}</p>
@@ -163,12 +161,8 @@ export default function PelanggaranPage() {
           <p className="text-2xl font-bold text-red-400">{jenisCount["KELUAR_APP"] || 0}</p>
         </div>
         <div className="glass-card rounded-xl p-4">
-          <p className="text-[10px] font-semibold text-orange-400 uppercase tracking-wider mb-1">Bluetooth</p>
-          <p className="text-2xl font-bold text-orange-400">{jenisCount["BLUETOOTH_AKTIF"] || 0}</p>
-        </div>
-        <div className="glass-card rounded-xl p-4">
-          <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Headset/Overlay</p>
-          <p className="text-2xl font-bold text-purple-400">{(jenisCount["HEADSET_TERDETEKSI"] || 0) + (jenisCount["OVERLAY_TERDETEKSI"] || 0)}</p>
+          <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Overlay</p>
+          <p className="text-2xl font-bold text-purple-400">{jenisCount["OVERLAY_TERDETEKSI"] || 0}</p>
         </div>
       </div>
 
@@ -205,9 +199,7 @@ export default function PelanggaranPage() {
             >
               <option value="all" className="bg-gray-900">Semua Jenis</option>
               <option value="KELUAR_APP" className="bg-gray-900">Keluar App</option>
-              <option value="BLUETOOTH_AKTIF" className="bg-gray-900">Bluetooth Aktif</option>
-              <option value="HEADSET_TERDETEKSI" className="bg-gray-900">Headset Terdeteksi</option>
-              <option value="OVERLAY_TERDETEKSI" className="bg-gray-900">Overlay Terdeteksi</option>
+              <option value="OVERLAY_TERDETEKSI" className="bg-gray-900">Overlay</option>
             </select>
           </div>
           <div>
