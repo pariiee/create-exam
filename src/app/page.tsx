@@ -107,7 +107,7 @@ export default function Home() {
     fetch("/api/total-users")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return safeJson<{ total?: number }>(r);
+        return safeJson(r);
       })
       .then((d) => {
         console.log("total-users response:", d);
@@ -161,7 +161,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(regForm),
       });
-      const data = await safeJson<{ error?: string; message?: string; duplicate?: { nis: string; nama: string; kelas: string } }>(res);
+      const data = await safeJson(res);
       if (!res.ok) {
         if (data.duplicate) {
           setDupInfo(data.duplicate);
@@ -191,7 +191,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nis: checkNis }),
       });
-      const data = await safeJson<{ error?: string; message?: string; found?: boolean; results?: NisResult[] }>(res);
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengecek NIS.");
       if (!data.found) {
         setCheckMsg({ type: "warning", text: data.message });
