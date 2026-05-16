@@ -97,7 +97,7 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/exam-info")
-      .then((r) => safeJson(r))
+      .then((r) => safeJson<{ url_download_apk?: string }>(r))
       .then((d) => setDownloadApkUrl(d.url_download_apk || ""))
       .catch(() => {});
     fetchTotalUsers();
@@ -107,7 +107,7 @@ export default function Home() {
     fetch("/api/total-users")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return safeJson(r);
+        return safeJson<{ total?: number }>(r);
       })
       .then((d) => {
         console.log("total-users response:", d);
@@ -161,7 +161,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(regForm),
       });
-      const data = await safeJson(res);
+      const data = await safeJson<{ error?: string; message?: string; duplicate?: { nis: string; nama: string; kelas: string } }>(res);
       if (!res.ok) {
         if (data.duplicate) {
           setDupInfo(data.duplicate);
@@ -191,7 +191,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nis: checkNis }),
       });
-      const data = await safeJson(res);
+      const data = await safeJson<{ error?: string; message?: string; found?: boolean; results?: NisResult[] }>(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengecek NIS.");
       if (!data.found) {
         setCheckMsg({ type: "warning", text: data.message });
