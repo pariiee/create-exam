@@ -46,7 +46,7 @@ export default function SiswaPage() {
         const allStudents: Student[] = [];
         for (const sheet of SHEETS) {
           const res = await fetch(`/siswa/api?sheet=${encodeURIComponent(sheet)}`);
-          const data = await safeJson(res);
+          const data = await safeJson<{ rows?: string[][] }>(res);
           if (data.rows) {
             for (const row of data.rows) {
               allStudents.push({
