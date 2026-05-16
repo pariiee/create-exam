@@ -107,7 +107,7 @@ export default function Home() {
     fetch("/api/total-users")
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return safeJson(r);
+        return safeJson<{ total?: number }>(r);
       })
       .then((d) => {
         console.log("total-users response:", d);
@@ -161,7 +161,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(regForm),
       });
-      const data = await safeJson(res);
+      const data = await safeJson<{ error?: string; message?: string; duplicate?: { nis: string; nama: string; kelas: string } }>(res);
       if (!res.ok) {
         if (data.duplicate) {
           setDupInfo(data.duplicate);
@@ -169,7 +169,7 @@ export default function Home() {
         throw new Error(data.error || "Gagal menyimpan data.");
       }
       setDupInfo(null);
-      setRegMsg({ type: "success", text: data.message });
+      setRegMsg({ type: "success", text: data.message || "Berhasil" });
       setRegForm({ nama: "", nis: "", kelas: "" });
       setSelTingkat(""); setSelJurusan(""); setSelNomor("");
       fetchTotalUsers();
@@ -191,13 +191,13 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nis: checkNis }),
       });
-      const data = await safeJson(res);
+      const data = await safeJson<{ error?: string; message?: string; found?: boolean; results?: NisResult[] }>(res);
       if (!res.ok) throw new Error(data.error || "Gagal mengecek NIS.");
       if (!data.found) {
-        setCheckMsg({ type: "warning", text: data.message });
+        setCheckMsg({ type: "warning", text: data.message || "Tidak ditemukan" });
       } else {
         setCheckMsg({ type: "success", text: "Data Ditemukan" });
-        setNisResults(data.results);
+        setNisResults(data.results || []);
       }
     } catch (err: unknown) {
       setCheckMsg({ type: "error", text: err instanceof Error ? err.message : "Terjadi kesalahan." });
