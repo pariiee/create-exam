@@ -84,15 +84,47 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { pin_out, url_ujian, url_download_apk } = await request.json();
+    const {
+      pin_out, url_ujian, url_download_apk,
+      sesi_1_mulai, sesi_1_selesai,
+      sesi_2_mulai, sesi_2_selesai,
+      sesi_aktif, tanggal_ujian,
+    } = await request.json();
 
     await ensureSettingsSheet();
 
+    // Read existing settings to preserve values not being updated
+    const existingRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
+    const existing: Record<string, string> = {};
+    for (let i = 1; i < existingRows.length; i++) {
+      const key = existingRows[i]?.[0];
+      const value = existingRows[i]?.[1] ?? "";
+      if (key) existing[key] = value;
+    }
+
+    const merged = {
+      pin_out: pin_out ?? existing["pin_out"] ?? "",
+      url_ujian: url_ujian ?? existing["url_ujian"] ?? "",
+      url_download_apk: url_download_apk ?? existing["url_download_apk"] ?? "",
+      SESI_1_MULAI: sesi_1_mulai ?? existing["SESI_1_MULAI"] ?? "07:30",
+      SESI_1_SELESAI: sesi_1_selesai ?? existing["SESI_1_SELESAI"] ?? "09:30",
+      SESI_2_MULAI: sesi_2_mulai ?? existing["SESI_2_MULAI"] ?? "10:00",
+      SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
+      SESI_AKTIF: sesi_aktif != null ? String(sesi_aktif) : existing["SESI_AKTIF"] ?? "1",
+      TANGGAL_UJIAN: tanggal_ujian ?? existing["TANGGAL_UJIAN"] ?? "",
+    };
+
     await rewriteSheet(SETTINGS_SHEET, [
       ["KEY", "VALUE"],
-      ["pin_out", pin_out ?? ""],
-      ["url_ujian", url_ujian ?? ""],
-      ["url_download_apk", url_download_apk ?? ""],
+      ["pin_out", merged.pin_out],
+      ["url_ujian", merged.url_ujian],
+      ["url_download_apk", merged.url_download_apk],
+      ["SESI_1_MULAI", merged.SESI_1_MULAI],
+      ["SESI_1_SELESAI", merged.SESI_1_SELESAI],
+      ["SESI_2_MULAI", merged.SESI_2_MULAI],
+      ["SESI_2_SELESAI", merged.SESI_2_SELESAI],
+      ["SESI_AKTIF", merged.SESI_AKTIF],
+      ["TANGGAL_UJIAN", merged.TANGGAL_UJIAN],
     ], getSettingsId());
 
     return NextResponse.json({ success: true, message: "Settings berhasil disimpan!" });

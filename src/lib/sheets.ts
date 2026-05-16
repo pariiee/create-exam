@@ -83,6 +83,24 @@ export async function rewriteSheet(sheetName: string, rows: (string | number)[][
 }
 
 /**
+ * Append rows to the end of a sheet.
+ */
+export async function appendToSheet(sheetName: string, rows: (string | number)[][], spreadsheetIdOverride?: string): Promise<void> {
+  const sheets = getSheets();
+  const spreadsheetId = spreadsheetIdOverride || getSpreadsheetId();
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: sheetName,
+    valueInputOption: "RAW",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: {
+      values: rows,
+    },
+  });
+}
+
+/**
  * Determine sheet name based on class prefix.
  */
 export function resolveSheetName(kelas: string): string {
