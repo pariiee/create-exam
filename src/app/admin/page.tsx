@@ -11,7 +11,6 @@ type SesiInfo = {
 };
 
 type SesiData = {
-  tanggal_ujian: string;
   sesi_aktif: number;
   sesi: SesiInfo[];
   boleh_masuk: boolean;
@@ -193,40 +192,24 @@ export default function AdminPage() {
           <h2 className="text-lg font-semibold text-white mb-4">Jadwal Sesi Ujian</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {sesiData.sesi.map((s) => (
-              <div key={s.nomor} className={`rounded-xl p-4 border ${s.status === "aktif" ? "bg-emerald-500/5 border-emerald-500/20" : s.status === "selesai" ? "bg-gray-500/5 border-white/5" : "bg-white/[0.02] border-white/5"}`}>
+              <div key={s.nomor} className={`rounded-xl p-4 border ${s.status === "aktif" ? "bg-emerald-500/5 border-emerald-500/20" : "bg-white/[0.02] border-white/5"}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-white">Sesi {s.nomor}</span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    s.status === "aktif" ? "bg-emerald-500/20 text-emerald-400" :
-                    s.status === "selesai" ? "bg-gray-500/20 text-gray-400" :
-                    "bg-amber-500/20 text-amber-400"
+                    s.status === "aktif" ? "bg-emerald-500/20 text-emerald-400" : "bg-gray-500/20 text-gray-400"
                   }`}>
-                    {s.status === "aktif" ? "Aktif" : s.status === "selesai" ? "Selesai" : "Belum Mulai"}
+                    {s.status === "aktif" ? "Aktif" : "Tidak Aktif"}
                   </span>
                 </div>
                 <p className="text-2xl font-mono font-bold text-gray-300">{s.mulai} - {s.selesai}</p>
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-500 mt-3">Tanggal ujian: {sesiData.tanggal_ujian || "(belum diatur)"}</p>
         </div>
       )}
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link href="/admin/sesi" className="glass-card rounded-2xl p-5 hover:bg-white/[0.04] transition-all group">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center group-hover:bg-indigo-500/20 transition-all">
-              <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">Kelola Sesi</p>
-              <p className="text-xs text-gray-500">Atur jadwal sesi ujian</p>
-            </div>
-          </div>
-        </Link>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/admin/pelanggaran" className="glass-card rounded-2xl p-5 hover:bg-white/[0.04] transition-all group">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-all">

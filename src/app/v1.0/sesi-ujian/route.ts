@@ -15,21 +15,14 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function getSesiStatus(
-  mulai: string,
-  selesai: string,
-  sesiNomor: number,
-  sesiAktif: number,
-  nowMinutes: number,
-  isToday: boolean
-): string {
-  if (!isToday) return "belum_mulai";
-  if (sesiNomor !== sesiAktif) return "belum_mulai";
+function isInRange(nowMin: number, mulai: string, selesai: string): boolean {
   const mulaiMin = timeToMinutes(mulai);
   const selesaiMin = timeToMinutes(selesai);
-  if (nowMinutes < mulaiMin) return "belum_mulai";
-  if (nowMinutes >= mulaiMin && nowMinutes <= selesaiMin) return "aktif";
-  return "selesai";
+  if (mulaiMin <= selesaiMin) {
+    return nowMin >= mulaiMin && nowMin <= selesaiMin;
+  }
+  // Crosses midnight (e.g. 23:25 - 00:00)
+  return nowMin >= mulaiMin || nowMin <= selesaiMin;
 }
 
 export async function GET() {
@@ -43,48 +36,33 @@ export async function GET() {
       if (key) settings[key] = value;
     }
 
-    const tanggalUjian = settings["TANGGAL_UJIAN"] || "";
-    const sesiAktif = parseInt(settings["SESI_AKTIF"] || "1", 10);
     const sesi1Mulai = settings["SESI_1_MULAI"] || "07:30";
     const sesi1Selesai = settings["SESI_1_SELESAI"] || "09:30";
     const sesi2Mulai = settings["SESI_2_MULAI"] || "10:00";
     const sesi2Selesai = settings["SESI_2_SELESAI"] || "12:00";
 
     const jakarta = getJakartaTime();
-    const todayStr = jakarta.toISOString().slice(0, 10);
-    const isToday = tanggalUjian === todayStr;
     const nowMinutes = jakarta.getHours() * 60 + jakarta.getMinutes();
 
-    const sesi1Status = getSesiStatus(sesi1Mulai, sesi1Selesai, 1, sesiAktif, nowMinutes, isToday);
-    const sesi2Status = getSesiStatus(sesi2Mulai, sesi2Selesai, 2, sesiAktif, nowMinutes, isToday);
+    const sesi1Active = isInRange(nowMinutes, sesi1Mulai, sesi1Selesai);
+    const sesi2Active = isInRange(nowMinutes, sesi2Mulai, sesi2Selesai);
 
-    let bolehMasuk = false;
+    const sesi1Status = sesi1Active ? "aktif" : "tidak_aktif";
+    const sesi2Status = sesi2Active ? "aktif" : "tidak_aktif";
+
+    const sesiAktif = sesi1Active ? 1 : sesi2Active ? 2 : 0;
+    const bolehMasuk = sesi1Active || sesi2Active;
+
     let pesan = "";
-
-    if (!isToday) {
-      pesan = `Ujian dijadwalkan tanggal ${tanggalUjian || "(belum diatur)"}`;
-    } else if (sesiAktif === 1) {
-      if (sesi1Status === "aktif") {
-        bolehMasuk = true;
-        pesan = `Sesi 1 sedang berlangsung (${sesi1Mulai} - ${sesi1Selesai})`;
-      } else if (sesi1Status === "belum_mulai") {
-        pesan = `Sesi 1 belum dimulai. Mulai pukul ${sesi1Mulai}`;
-      } else {
-        pesan = `Sesi 1 sudah selesai (${sesi1Mulai} - ${sesi1Selesai})`;
-      }
-    } else if (sesiAktif === 2) {
-      if (sesi2Status === "aktif") {
-        bolehMasuk = true;
-        pesan = `Sesi 2 sedang berlangsung (${sesi2Mulai} - ${sesi2Selesai})`;
-      } else if (sesi2Status === "belum_mulai") {
-        pesan = `Sesi 2 belum dimulai. Mulai pukul ${sesi2Mulai}`;
-      } else {
-        pesan = `Sesi 2 sudah selesai (${sesi2Mulai} - ${sesi2Selesai})`;
-      }
+    if (sesi1Active) {
+      pesan = `Sesi 1 sedang berlangsung (${sesi1Mulai} - ${sesi1Selesai})`;
+    } else if (sesi2Active) {
+      pesan = `Sesi 2 sedang berlangsung (${sesi2Mulai} - ${sesi2Selesai})`;
+    } else {
+      pesan = "Tidak ada sesi yang aktif saat ini";
     }
 
     return NextResponse.json({
-      tanggal_ujian: tanggalUjian,
       sesi_aktif: sesiAktif,
       sesi: [
         {

@@ -10,8 +10,6 @@ export default function AdminSettingsPage() {
   const [sesi1Selesai, setSesi1Selesai] = useState("09:30");
   const [sesi2Mulai, setSesi2Mulai] = useState("10:00");
   const [sesi2Selesai, setSesi2Selesai] = useState("12:00");
-  const [sesiAktif, setSesiAktif] = useState(1);
-  const [tanggalUjian, setTanggalUjian] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -34,8 +32,6 @@ export default function AdminSettingsPage() {
         setSesi1Selesai(s.SESI_1_SELESAI || "09:30");
         setSesi2Mulai(s.SESI_2_MULAI || "10:00");
         setSesi2Selesai(s.SESI_2_SELESAI || "12:00");
-        setSesiAktif(parseInt(s.SESI_AKTIF || "1", 10));
-        setTanggalUjian(s.TANGGAL_UJIAN || "");
       }
     } catch {
       // ignore
@@ -67,8 +63,6 @@ export default function AdminSettingsPage() {
           sesi_1_selesai: sesi1Selesai,
           sesi_2_mulai: sesi2Mulai,
           sesi_2_selesai: sesi2Selesai,
-          sesi_aktif: sesiAktif,
-          tanggal_ujian: tanggalUjian,
         }),
       });
       const data = await res.json();
@@ -184,27 +178,6 @@ export default function AdminSettingsPage() {
           <div className="flex-1 h-px bg-white/5" />
         </div>
 
-        {/* Tanggal Ujian */}
-        <div className="glass-card rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Tanggal Ujian</h3>
-              <p className="text-gray-400 text-sm">Pilih tanggal pelaksanaan ujian</p>
-            </div>
-          </div>
-          <input
-            type="date"
-            value={tanggalUjian}
-            onChange={(e) => setTanggalUjian(e.target.value)}
-            className="input-glow w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-sky-500 transition-all duration-200 [color-scheme:dark]"
-          />
-        </div>
-
         {/* Sesi 1 */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -251,23 +224,9 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Sesi Aktif */}
-        <div className="glass-card rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Sesi Aktif</h3>
-              <p className="text-gray-400 text-sm">Pilih sesi yang sedang berlangsung</p>
-            </div>
-          </div>
-          <div className="flex items-center p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <button type="button" onClick={() => setSesiAktif(1)} className={`flex-1 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${sesiAktif === 1 ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" : "text-gray-400 hover:text-white"}`}>Sesi 1</button>
-            <button type="button" onClick={() => setSesiAktif(2)} className={`flex-1 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${sesiAktif === 2 ? "bg-purple-600 text-white shadow-md shadow-purple-500/30" : "text-gray-400 hover:text-white"}`}>Sesi 2</button>
-          </div>
+        {/* Info */}
+        <div className="rounded-xl p-4 bg-indigo-500/5 border border-indigo-500/10">
+          <p className="text-xs text-indigo-300">Sesi aktif ditentukan otomatis berdasarkan jam saat ini. Jika jam sekarang berada dalam rentang sesi 1 atau sesi 2, maka sesi tersebut yang aktif.</p>
         </div>
 
         {/* Save */}

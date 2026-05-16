@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
       pin_out, url_ujian, url_download_apk,
       sesi_1_mulai, sesi_1_selesai,
       sesi_2_mulai, sesi_2_selesai,
-      sesi_aktif, tanggal_ujian,
     } = await request.json();
 
     await ensureSettingsSheet();
@@ -110,8 +109,6 @@ export async function POST(request: NextRequest) {
       SESI_1_SELESAI: sesi_1_selesai ?? existing["SESI_1_SELESAI"] ?? "09:30",
       SESI_2_MULAI: sesi_2_mulai ?? existing["SESI_2_MULAI"] ?? "10:00",
       SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
-      SESI_AKTIF: sesi_aktif != null ? String(sesi_aktif) : existing["SESI_AKTIF"] ?? "1",
-      TANGGAL_UJIAN: tanggal_ujian ?? existing["TANGGAL_UJIAN"] ?? "",
     };
 
     await rewriteSheet(SETTINGS_SHEET, [
@@ -123,8 +120,6 @@ export async function POST(request: NextRequest) {
       ["SESI_1_SELESAI", merged.SESI_1_SELESAI],
       ["SESI_2_MULAI", merged.SESI_2_MULAI],
       ["SESI_2_SELESAI", merged.SESI_2_SELESAI],
-      ["SESI_AKTIF", merged.SESI_AKTIF],
-      ["TANGGAL_UJIAN", merged.TANGGAL_UJIAN],
     ], getSettingsId());
 
     return NextResponse.json({ success: true, message: "Settings berhasil disimpan!" });
