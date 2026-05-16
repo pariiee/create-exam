@@ -31,7 +31,11 @@ export default function PelanggaranPage() {
   const [filterSesi, setFilterSesi] = useState<string>("all");
   const [filterJenis, setFilterJenis] = useState<string>("all");
   const [filterKelas, setFilterKelas] = useState<string>("all");
-  const [filterTanggal, setFilterTanggal] = useState(() => new Date().toISOString().slice(0, 10));
+  const [filterTanggal, setFilterTanggal] = useState(() => {
+    const now = new Date();
+    const jakartaMs = now.getTime() + now.getTimezoneOffset() * 60000 + 7 * 60 * 60000;
+    return new Date(jakartaMs).toISOString().slice(0, 10);
+  });
   const [search, setSearch] = useState("");
   const [selectedNis, setSelectedNis] = useState<string | null>(null);
 
