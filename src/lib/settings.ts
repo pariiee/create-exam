@@ -15,12 +15,31 @@ export function readSettingsRows(rows: unknown[][]): SettingsMap {
 }
 
 export function settingToBoolean(value: unknown, defaultValue = true): boolean {
-  if (value === undefined || value === null || value === "") return defaultValue;
+  // Explicit null/undefined check
+  if (value === null || value === undefined) return defaultValue;
+  
+  // If already boolean, return as-is
   if (typeof value === "boolean") return value;
-
-  const normalized = String(value).trim().toLowerCase();
-  if (["false", "0", "off", "no", "disabled", "disable"].includes(normalized)) return false;
-  if (["true", "1", "on", "yes", "enabled", "enable"].includes(normalized)) return true;
-
+  
+  // Convert to string and normalize
+  const str = String(value).trim();
+  
+  // Empty string uses default
+  if (str === "") return defaultValue;
+  
+  const lower = str.toLowerCase();
+  
+  // Explicit false check
+  if (lower === "false" || lower === "0" || lower === "off" || lower === "no") {
+    return false;
+  }
+  
+  // Explicit true check
+  if (lower === "true" || lower === "1" || lower === "on" || lower === "yes") {
+    return true;
+  }
+  
+  // For any other value, use default (but log warning if unexpected)
+  console.warn("[settingToBoolean] Unexpected value, using default:", value, "->", defaultValue);
   return defaultValue;
 }

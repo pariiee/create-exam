@@ -88,20 +88,30 @@ export async function POST(request: NextRequest) {
       pin_out_enabled,
     } = await request.json();
 
+    console.log("[Settings POST] Received pin_out_enabled:", pin_out_enabled, "type:", typeof pin_out_enabled);
+
     await ensureSettingsSheet();
 
     // Read existing settings to preserve values not being updated
     const existingRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
     const existing = readSettingsRows(existingRows);
 
-    // Convert pin_out_enabled to explicit boolean string
+    // Convert pin_out_enabled to ONLY "true" or "false" string - no ambiguity
     let pinOutEnabledStr: string;
     if (typeof pin_out_enabled === "boolean") {
+      // Direct boolean conversion
       pinOutEnabledStr = pin_out_enabled ? "true" : "false";
+      console.log("[Settings POST] Boolean conversion:", pin_out_enabled, "->", pinOutEnabledStr);
     } else if (pin_out_enabled !== null && pin_out_enabled !== undefined) {
-      pinOutEnabledStr = String(pin_out_enabled).toLowerCase() === "false" ? "false" : "true";
+      // String or other type conversion
+      const normalized = String(pin_out_enabled).trim().toLowerCase();
+      pinOutEnabledStr = normalized === "false" || normalized === "0" || normalized === "off" ? "false" : "true";
+      console.log("[Settings POST] String conversion:", pin_out_enabled, "->", pinOutEnabledStr);
     } else {
-      pinOutEnabledStr = existing["pin_out_enabled"] ?? "true";
+      // Use existing if not provided
+      const existingValue = existing["pin_out_enabled"] ?? "true";
+      pinOutEnabledStr = existingValue.toLowerCase() === "false" ? "false" : "true";
+      console.log("[Settings POST] Using existing:", existingValue, "->", pinOutEnabledStr);
     }
 
     const merged = {
@@ -114,6 +124,8 @@ export async function POST(request: NextRequest) {
       SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
       pin_out_enabled: pinOutEnabledStr,
     };
+
+    console.log("[Settings POST] Final merged object:", merged);
 
     await rewriteSheet(SETTINGS_SHEET, [
       ["KEY", "VALUE"],
@@ -130,6 +142,9 @@ export async function POST(request: NextRequest) {
     // Read back from sheet to verify save was successful
     const verifyRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
     const verified = readSettingsRows(verifyRows);
+    
+    console.log("[Settings POST] Verified from sheet:", verified);
+    console.log("[Settings POST] Verified pin_out_enabled:", verified.pin_out_enabled);
 
     return NextResponse.json({ success: true, message: "Settings berhasil disimpan!", settings: verified });
   } catch (error: unknown) {

@@ -27,10 +27,17 @@ export default function AdminSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         const s = data.settings || {};
-        console.log("[Fetch Settings] Raw data from server:", s);
+        console.log("[Fetch Settings] Raw settings from server:", s);
         
-        const pinOutEnabledValue = settingToBoolean(s.pin_out_enabled, true);
-        console.log("[Fetch Settings] pin_out_enabled conversion:", s.pin_out_enabled, "->", pinOutEnabledValue);
+        // Always explicitly convert using settingToBoolean with true as default
+        // But log if value is missing
+        const rawValue = s.pin_out_enabled;
+        const pinOutEnabledValue = settingToBoolean(rawValue, true);
+        console.log("[Fetch Settings] pin_out_enabled:", { raw: rawValue, converted: pinOutEnabledValue });
+        
+        if (!rawValue) {
+          console.warn("[Fetch Settings] WARNING: pin_out_enabled is missing/empty from server!");
+        }
         
         setPinOut(s.pin_out || "");
         setPinOutEnabled(pinOutEnabledValue);
@@ -41,8 +48,8 @@ export default function AdminSettingsPage() {
         setSesi2Mulai(s.SESI_2_MULAI || "10:00");
         setSesi2Selesai(s.SESI_2_SELESAI || "12:00");
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("[Fetch Settings] Error:", err);
     } finally {
       setLoading(false);
     }
