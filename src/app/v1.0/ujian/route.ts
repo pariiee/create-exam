@@ -51,6 +51,7 @@ export async function GET() {
         pin_out: settings.pin_out ?? "",
         url_ujian: settings.url_ujian ?? "",
         sesi: 1,
+        pin_out_enabled: settings.pin_out_enabled !== "false",
       });
     }
 
@@ -59,6 +60,7 @@ export async function GET() {
         pin_out: settings.pin_out ?? "",
         url_ujian: settings.url_ujian ?? "",
         sesi: 2,
+        pin_out_enabled: settings.pin_out_enabled !== "false",
       });
     }
 

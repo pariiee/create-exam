@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 
 export default function AdminSettingsPage() {
   const [pinOut, setPinOut] = useState("");
+  const [pinOutEnabled, setPinOutEnabled] = useState(true);
   const [urlUjian, setUrlUjian] = useState("");
   const [urlDownloadApk, setUrlDownloadApk] = useState("");
   const [sesi1Mulai, setSesi1Mulai] = useState("07:30");
@@ -26,6 +27,7 @@ export default function AdminSettingsPage() {
         const data = await res.json();
         const s = data.settings || {};
         setPinOut(s.pin_out || "");
+        setPinOutEnabled(s.pin_out_enabled !== "false");
         setUrlUjian(s.url_ujian || "");
         setUrlDownloadApk(s.url_download_apk || "");
         setSesi1Mulai(s.SESI_1_MULAI || "07:30");
@@ -57,6 +59,7 @@ export default function AdminSettingsPage() {
         },
         body: JSON.stringify({
           pin_out: pinOut,
+          pin_out_enabled: pinOutEnabled,
           url_ujian: urlUjian,
           url_download_apk: urlDownloadApk,
           sesi_1_mulai: sesi1Mulai,
@@ -125,6 +128,25 @@ export default function AdminSettingsPage() {
             inputMode="numeric"
             className="input-glow w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-all duration-200 text-lg tracking-widest"
           />
+          <div className="mt-4 flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <div>
+              <p className="text-sm font-semibold text-white">PIN OUT Aktif</p>
+              <p className="text-xs text-gray-400 mt-0.5">{pinOutEnabled ? "Siswa wajib input PIN OUT saat selesai ujian" : "Siswa langsung selesai tanpa PIN OUT"}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPinOutEnabled(!pinOutEnabled)}
+              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                pinOutEnabled ? "bg-amber-500" : "bg-white/10"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  pinOutEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* URL Ujian */}
