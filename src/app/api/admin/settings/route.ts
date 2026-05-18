@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, getSettingsSheetId } from "@/lib/sheets";
+import { readSettingsRows } from "@/lib/settings";
 import { google } from "googleapis";
 
 const SETTINGS_SHEET = "SETTINGS";
@@ -48,6 +49,7 @@ async function ensureSettingsSheet() {
     await rewriteSheet(SETTINGS_SHEET, [
       ["KEY", "VALUE"],
       ["pin_out", ""],
+      ["pin_out_enabled", "true"],
       ["url_ujian", ""],
       ["url_download_apk", ""],
     ], sid);
@@ -64,12 +66,7 @@ export async function GET(request: NextRequest) {
     await ensureSettingsSheet();
     const rows = await getSheetData(SETTINGS_SHEET, sid);
 
-    const settings: Record<string, string> = {};
-    for (let i = 1; i < rows.length; i++) {
-      const key = rows[i]?.[0];
-      const value = rows[i]?.[1] ?? "";
-      if (key) settings[key] = value;
-    }
+    const settings = readSettingsRows(rows);
 
     return NextResponse.json({ settings });
   } catch (error: unknown) {
@@ -95,12 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Read existing settings to preserve values not being updated
     const existingRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
-    const existing: Record<string, string> = {};
-    for (let i = 1; i < existingRows.length; i++) {
-      const key = existingRows[i]?.[0];
-      const value = existingRows[i]?.[1] ?? "";
-      if (key) existing[key] = value;
-    }
+    const existing = readSettingsRows(existingRows);
 
     const merged = {
       pin_out: pin_out ?? existing["pin_out"] ?? "",
@@ -125,7 +117,7 @@ export async function POST(request: NextRequest) {
       ["pin_out_enabled", merged.pin_out_enabled],
     ], getSettingsId());
 
-    return NextResponse.json({ success: true, message: "Settings berhasil disimpan!" });
+    return NextResponse.json({ success: true, message: "Settings berhasil disimpan!", settings: merged });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Server error";
     return NextResponse.json({ error: msg }, { status: 500 });

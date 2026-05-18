@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { settingToBoolean } from "@/lib/settings";
 
 export default function AdminSettingsPage() {
   const [pinOut, setPinOut] = useState("");
@@ -27,7 +28,7 @@ export default function AdminSettingsPage() {
         const data = await res.json();
         const s = data.settings || {};
         setPinOut(s.pin_out || "");
-        setPinOutEnabled(s.pin_out_enabled !== "false");
+        setPinOutEnabled(settingToBoolean(s.pin_out_enabled, true));
         setUrlUjian(s.url_ujian || "");
         setUrlDownloadApk(s.url_download_apk || "");
         setSesi1Mulai(s.SESI_1_MULAI || "07:30");

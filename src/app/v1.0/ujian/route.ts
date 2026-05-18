@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSheetData, getSettingsSheetId } from "@/lib/sheets";
+import { readSettingsRows, settingToBoolean } from "@/lib/settings";
 
 const SETTINGS_SHEET = "SETTINGS";
 
@@ -28,12 +29,7 @@ export async function GET() {
   try {
     const rows = await getSheetData(SETTINGS_SHEET, getSettingsSheetId());
 
-    const settings: Record<string, string> = {};
-    for (let i = 1; i < rows.length; i++) {
-      const key = rows[i]?.[0];
-      const value = rows[i]?.[1] ?? "";
-      if (key) settings[key] = value;
-    }
+    const settings = readSettingsRows(rows);
 
     const sesi1Mulai = settings["SESI_1_MULAI"] || "07:30";
     const sesi1Selesai = settings["SESI_1_SELESAI"] || "09:30";
@@ -51,7 +47,7 @@ export async function GET() {
         pin_out: settings.pin_out ?? "",
         url_ujian: settings.url_ujian ?? "",
         sesi: 1,
-        pin_out_enabled: settings.pin_out_enabled !== "false",
+        pin_out_enabled: settingToBoolean(settings.pin_out_enabled, true),
       });
     }
 
@@ -60,7 +56,7 @@ export async function GET() {
         pin_out: settings.pin_out ?? "",
         url_ujian: settings.url_ujian ?? "",
         sesi: 2,
-        pin_out_enabled: settings.pin_out_enabled !== "false",
+        pin_out_enabled: settingToBoolean(settings.pin_out_enabled, true),
       });
     }
 
