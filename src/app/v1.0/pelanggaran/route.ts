@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSheetData, getSpreadsheetId } from "@/lib/sheets";
+import { getSheetData, getSettingsSheetId } from "@/lib/sheets";
 
 const PELANGGARAN_SHEET = "PELANGGARAN";
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     let rows: string[][];
     try {
-      rows = await getSheetData(PELANGGARAN_SHEET, getSpreadsheetId());
+      rows = await getSheetData(PELANGGARAN_SHEET, getSettingsSheetId());
     } catch {
       return NextResponse.json({
         tanggal: tanggalFilter || "",

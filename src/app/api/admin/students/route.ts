@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSheetData, rewriteSheet, resolveSheetName } from "@/lib/sheets";
+import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sheets";
 
 const SHEETS = ["KELAS X", "KELAS XI", "KELAS XII"];
 
@@ -74,6 +74,67 @@ export async function DELETE(request: NextRequest) {
 
     await rewriteSheet(sheet, [header, ...renumbered]);
     return NextResponse.json({ success: true, message: `Siswa dengan NIS ${nis} berhasil dihapus.` });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+// POST - add a new student
+export async function POST(request: NextRequest) {
+  if (!verifyToken(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { nama, nis, kelas } = await request.json();
+
+    if (!nama || typeof nama !== "string" || nama.trim().length === 0) {
+      return NextResponse.json({ error: "Nama wajib diisi." }, { status: 400 });
+    }
+    if (!nis || !/^\d{5}$/.test(nis)) {
+      return NextResponse.json({ error: "NIS harus tepat 5 digit angka." }, { status: 400 });
+    }
+    if (!kelas || !allKelas.includes(kelas)) {
+      return NextResponse.json({ error: "Kelas yang dipilih tidak valid." }, { status: 400 });
+    }
+
+    // Check NIS uniqueness across all sheets
+    for (const sheet of SHEETS) {
+      try {
+        const rows = await getSheetData(sheet);
+        for (let i = 1; i < rows.length; i++) {
+          if (String(rows[i][1] ?? "").trim() === nis.trim()) {
+            return NextResponse.json({
+              error: `NIS ${nis} sudah terdaftar (${rows[i][2] ?? ""} - ${rows[i][3] ?? ""}).`,
+            }, { status: 409 });
+          }
+        }
+      } catch {
+        // Sheet might not exist yet
+      }
+    }
+
+    const sheetName = resolveSheetName(kelas);
+    const allRows = await getSheetData(sheetName);
+    const header = allRows.length > 0 ? allRows[0] : ["NO", "NIS", "NAMA", "KELAS"];
+    const dataRows = allRows.slice(1).filter((row) => row[1] && row[1] !== "");
+
+    dataRows.push(["", nis.trim(), nama.trim(), kelas]);
+
+    // Sort by NIS ascending
+    dataRows.sort((a, b) => (a[1] || "").localeCompare(b[1] || ""));
+
+    // Renumber
+    const writeRows: (string | number)[][] = [header];
+    let no = 1;
+    for (const row of dataRows) {
+      writeRows.push([no++, row[1], row[2], row[3]]);
+    }
+
+    await rewriteSheet(sheetName, writeRows);
+
+    return NextResponse.json({ success: true, message: "Siswa berhasil ditambahkan!" });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Server error";
     return NextResponse.json({ error: msg }, { status: 500 });

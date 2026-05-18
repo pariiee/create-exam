@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSheetData, appendToSheet, rewriteSheet, getSpreadsheetId } from "@/lib/sheets";
+import { getSheetData, appendToSheet, rewriteSheet, getSettingsSheetId } from "@/lib/sheets";
 import { google } from "googleapis";
 
 const PELANGGARAN_SHEET = "PELANGGARAN";
@@ -14,7 +14,7 @@ function getJakartaTimestamp(): string {
 }
 
 async function ensurePelanggaranSheet() {
-  const sid = getSpreadsheetId();
+  const sid = getSettingsSheetId();
   try {
     await getSheetData(PELANGGARAN_SHEET, sid);
   } catch {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       "TERCATAT",
     ];
 
-    await appendToSheet(PELANGGARAN_SHEET, [row], getSpreadsheetId());
+    await appendToSheet(PELANGGARAN_SHEET, [row], getSettingsSheetId());
 
     return NextResponse.json({ success: true, message: "Pelanggaran tercatat" });
   } catch (error: unknown) {

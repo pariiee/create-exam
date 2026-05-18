@@ -16,12 +16,58 @@ export default function AdminSiswaPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Add student
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ nama: "", nis: "", kelas: "" });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addTingkat, setAddTingkat] = useState("");
+  const [addJurusan, setAddJurusan] = useState("");
+  const [addNomor, setAddNomor] = useState("");
+
   // Edit kelas step selector
   const [editTingkat, setEditTingkat] = useState("");
   const [editJurusan, setEditJurusan] = useState("");
   const [editNomor, setEditNomor] = useState("");
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
+
+  // Add kelas options
+  const addJurusanOptions = useMemo(() => {
+    if (!addTingkat || !kelasOptions[addTingkat]) return [];
+    const jurusans = new Map<string, string[]>();
+    for (const k of kelasOptions[addTingkat]) {
+      const parts = k.split(/\s+/);
+      const withoutTingkat = parts.slice(1);
+      const last = withoutTingkat[withoutTingkat.length - 1];
+      const hasNumber = /^\d+$/.test(last) && withoutTingkat.length > 1;
+      const jurusan = hasNumber ? withoutTingkat.slice(0, -1).join(" ") : withoutTingkat.join(" ");
+      const nomor = hasNumber ? last : "";
+      if (!jurusans.has(jurusan)) jurusans.set(jurusan, []);
+      if (nomor) jurusans.get(jurusan)!.push(nomor);
+    }
+    return Array.from(jurusans.entries()).map(([j, nums]) => ({ jurusan: j, nomors: nums.sort() }));
+  }, [addTingkat]);
+
+  const addNomorOptions = useMemo(() => {
+    const found = addJurusanOptions.find((j) => j.jurusan === addJurusan);
+    return found ? found.nomors : [];
+  }, [addJurusanOptions, addJurusan]);
+
+  useEffect(() => {
+    if (!addTingkat || !addJurusan) {
+      setAddForm((f) => ({ ...f, kelas: "" }));
+      return;
+    }
+    const found = addJurusanOptions.find((j) => j.jurusan === addJurusan);
+    if (!found) return;
+    if (found.nomors.length === 0) {
+      setAddForm((f) => ({ ...f, kelas: `${addTingkat} ${addJurusan}` }));
+    } else if (addNomor) {
+      setAddForm((f) => ({ ...f, kelas: `${addTingkat} ${addJurusan} ${addNomor}` }));
+    } else {
+      setAddForm((f) => ({ ...f, kelas: "" }));
+    }
+  }, [addTingkat, addJurusan, addNomor, addJurusanOptions]);
 
   const editJurusanOptions = useMemo(() => {
     if (!editTingkat || !kelasOptions[editTingkat]) return [];
@@ -80,6 +126,32 @@ export default function AdminSiswaPage() {
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  async function handleAddSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setAddLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/admin/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ nama: addForm.nama, nis: addForm.nis, kelas: addForm.kelas }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menambahkan.");
+      setMsg({ type: "success", text: data.message });
+      setShowAdd(false);
+      setAddForm({ nama: "", nis: "", kelas: "" });
+      setAddTingkat("");
+      setAddJurusan("");
+      setAddNomor("");
+      fetchStudents();
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : "Terjadi kesalahan." });
+    } finally {
+      setAddLoading(false);
+    }
+  }
 
   async function handleDeleteStudent() {
     if (!deleteConfirm) return;
@@ -176,10 +248,16 @@ export default function AdminSiswaPage() {
           <h1 className="text-3xl font-bold text-white">Data Siswa</h1>
           <p className="text-gray-400 mt-1">Total: <span className="text-white font-medium">{students.length}</span> siswa terdaftar</p>
         </div>
-        <button onClick={fetchStudents} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-sm font-medium transition-all">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setShowAdd(true); setAddForm({ nama: "", nis: "", kelas: "" }); setAddTingkat(""); setAddJurusan(""); setAddNomor(""); }} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 text-sm font-medium transition-all">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            Tambah Siswa
+          </button>
+          <button onClick={fetchStudents} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-sm font-medium transition-all">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {msg && (
@@ -253,6 +331,67 @@ export default function AdminSiswaPage() {
           </div>
         )}
       </div>
+
+      {/* Add Modal */}
+      {showAdd && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowAdd(false)}>
+          <div className="w-full max-w-md glass-card glow-border rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-white mb-4">Tambah Siswa Baru</h3>
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Nama</label>
+                <input type="text" value={addForm.nama} onChange={(e) => setAddForm({ ...addForm, nama: e.target.value })} placeholder="Nama lengkap" className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all text-sm" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">NIS</label>
+                <input type="text" value={addForm.nis} onChange={(e) => setAddForm({ ...addForm, nis: e.target.value.replace(/[^0-9]/g, "").slice(0, 5) })} maxLength={5} inputMode="numeric" placeholder="5 digit" className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all text-sm" required />
+              </div>
+              <div className="space-y-2.5">
+                <label className="block text-sm font-medium text-gray-300">Kelas</label>
+                <div>
+                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Tingkat</span>
+                  <div className="flex items-center p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    {["X", "XI", "XII"].map((t) => (
+                      <button type="button" key={t} onClick={() => { setAddTingkat(t); setAddJurusan(""); setAddNomor(""); }} className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${addTingkat === t ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" : "text-gray-400 hover:text-white"}`}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+                {addTingkat && addJurusanOptions.length > 0 && (
+                  <div className="animate-slideDown">
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Jurusan</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {addJurusanOptions.map(({ jurusan }) => (
+                        <button type="button" key={jurusan} onClick={() => { setAddJurusan(jurusan); setAddNomor(""); }} className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${addJurusan === jurusan ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30" : "bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:text-white hover:border-cyan-500/30"}`}>{jurusan}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {addJurusan && addNomorOptions.length > 0 && (
+                  <div className="animate-slideDown">
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1 block">Nomor Kelas</span>
+                    <div className="flex gap-1.5">
+                      {addNomorOptions.map((n) => (
+                        <button type="button" key={n} onClick={() => setAddNomor(n)} className={`w-9 h-9 rounded-lg text-xs font-semibold transition-all duration-200 ${addNomor === n ? "bg-purple-500/20 text-purple-300 border border-purple-400/30" : "bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:text-white hover:border-purple-500/30"}`}>{n}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {addForm.kelas && (
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-xs text-emerald-300 font-medium">{addForm.kelas}</span>
+                  </div>
+                )}
+                <input type="text" value={addForm.kelas} required className="sr-only" tabIndex={-1} onChange={() => {}} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:border-white/20 text-sm font-medium transition-all">Batal</button>
+                <button type="submit" disabled={addLoading} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-sm font-semibold transition-all disabled:opacity-50">{addLoading ? "Menyimpan..." : "Tambah"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editStudent && (
