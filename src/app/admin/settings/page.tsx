@@ -27,8 +27,13 @@ export default function AdminSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         const s = data.settings || {};
+        console.log("[Fetch Settings] Raw data from server:", s);
+        
+        const pinOutEnabledValue = settingToBoolean(s.pin_out_enabled, true);
+        console.log("[Fetch Settings] pin_out_enabled conversion:", s.pin_out_enabled, "->", pinOutEnabledValue);
+        
         setPinOut(s.pin_out || "");
-        setPinOutEnabled(settingToBoolean(s.pin_out_enabled, true));
+        setPinOutEnabled(pinOutEnabledValue);
         setUrlUjian(s.url_ujian || "");
         setUrlDownloadApk(s.url_download_apk || "");
         setSesi1Mulai(s.SESI_1_MULAI || "07:30");
@@ -52,31 +57,40 @@ export default function AdminSettingsPage() {
     setSaving(true);
     setMsg(null);
     try {
+      const payload = {
+        pin_out: pinOut,
+        pin_out_enabled: pinOutEnabled,
+        url_ujian: urlUjian,
+        url_download_apk: urlDownloadApk,
+        sesi_1_mulai: sesi1Mulai,
+        sesi_1_selesai: sesi1Selesai,
+        sesi_2_mulai: sesi2Mulai,
+        sesi_2_selesai: sesi2Selesai,
+      };
+      console.log("[Settings Save] Sending payload:", payload);
+
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getToken()}`,
         },
-        body: JSON.stringify({
-          pin_out: pinOut,
-          pin_out_enabled: pinOutEnabled,
-          url_ujian: urlUjian,
-          url_download_apk: urlDownloadApk,
-          sesi_1_mulai: sesi1Mulai,
-          sesi_1_selesai: sesi1Selesai,
-          sesi_2_mulai: sesi2Mulai,
-          sesi_2_selesai: sesi2Selesai,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
+      console.log("[Settings Save] Response:", { status: res.ok, data });
+
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan.");
       
-      // Update state immediately from response, then fetch untuk final sync
+      // Update state immediately from verified response
       if (data.settings) {
         const s = data.settings;
+        console.log("[Settings Save] Settings from response:", s);
+        const newPinOutEnabled = settingToBoolean(s.pin_out_enabled, true);
+        console.log("[Settings Save] Converted pin_out_enabled:", s.pin_out_enabled, "->", newPinOutEnabled);
+        
         setPinOut(s.pin_out || "");
-        setPinOutEnabled(settingToBoolean(s.pin_out_enabled, true));
+        setPinOutEnabled(newPinOutEnabled);
         setUrlUjian(s.url_ujian || "");
         setUrlDownloadApk(s.url_download_apk || "");
         setSesi1Mulai(s.SESI_1_MULAI || "07:30");
@@ -87,8 +101,12 @@ export default function AdminSettingsPage() {
       
       setMsg({ type: "success", text: "Semua pengaturan berhasil disimpan!" });
       // Fetch ulang untuk final sync dengan server
-      setTimeout(() => fetchSettings(), 300);
+      setTimeout(() => {
+        console.log("[Settings Save] Fetching settings for final verification");
+        fetchSettings();
+      }, 300);
     } catch (err: unknown) {
+      console.error("[Settings Save] Error:", err);
       setMsg({ type: "error", text: err instanceof Error ? err.message : "Terjadi kesalahan." });
     } finally {
       setSaving(false);

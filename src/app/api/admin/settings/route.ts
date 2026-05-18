@@ -127,9 +127,14 @@ export async function POST(request: NextRequest) {
       ["pin_out_enabled", merged.pin_out_enabled],
     ], getSettingsId());
 
-    return NextResponse.json({ success: true, message: "Settings berhasil disimpan!", settings: merged });
+    // Read back from sheet to verify save was successful
+    const verifyRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
+    const verified = readSettingsRows(verifyRows);
+
+    return NextResponse.json({ success: true, message: "Settings berhasil disimpan!", settings: verified });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Server error";
+    console.error("[Settings POST Error]", msg, error);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
