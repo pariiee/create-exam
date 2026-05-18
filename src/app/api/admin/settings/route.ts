@@ -24,9 +24,61 @@ function verifyToken(request: NextRequest): boolean {
 async function ensureSettingsSheet() {
   const sid = getSettingsId();
   try {
-    await getSheetData(SETTINGS_SHEET, sid);
-  } catch {
+    const rows = await getSheetData(SETTINGS_SHEET, sid);
+    
+    // Check if sheet has proper structure (at least header + some data rows)
+    // If empty or missing structure, reinitialize it
+    if (!rows || rows.length < 2) {
+      console.log("[ensureSettingsSheet] Sheet exists but is empty or incomplete, reinitializing...");
+      await rewriteSheet(SETTINGS_SHEET, [
+        ["KEY", "VALUE"],
+        ["pin_out", ""],
+        ["pin_out_enabled", "true"],
+        ["url_ujian", ""],
+        ["url_download_apk", ""],
+        ["SESI_1_MULAI", "07:30"],
+        ["SESI_1_SELESAI", "09:30"],
+        ["SESI_2_MULAI", "10:00"],
+        ["SESI_2_SELESAI", "12:00"],
+      ], sid);
+      return;
+    }
+    
+    // Verify all required keys exist, if not add them
+    const settings = readSettingsRows(rows);
+    const requiredKeys = ["pin_out", "pin_out_enabled", "url_ujian", "url_download_apk", "SESI_1_MULAI", "SESI_1_SELESAI", "SESI_2_MULAI", "SESI_2_SELESAI"];
+    const missingKeys = requiredKeys.filter(key => !(key in settings));
+    
+    if (missingKeys.length > 0) {
+      console.log("[ensureSettingsSheet] Missing keys:", missingKeys, "- reinitializing...");
+      const defaultSettings = {
+        pin_out: "",
+        pin_out_enabled: "true",
+        url_ujian: "",
+        url_download_apk: "",
+        SESI_1_MULAI: "07:30",
+        SESI_1_SELESAI: "09:30",
+        SESI_2_MULAI: "10:00",
+        SESI_2_SELESAI: "12:00",
+      };
+      
+      const merged = { ...defaultSettings, ...settings };
+      const newRows = [
+        ["KEY", "VALUE"],
+        ["pin_out", merged.pin_out],
+        ["pin_out_enabled", merged.pin_out_enabled],
+        ["url_ujian", merged.url_ujian],
+        ["url_download_apk", merged.url_download_apk],
+        ["SESI_1_MULAI", merged.SESI_1_MULAI],
+        ["SESI_1_SELESAI", merged.SESI_1_SELESAI],
+        ["SESI_2_MULAI", merged.SESI_2_MULAI],
+        ["SESI_2_SELESAI", merged.SESI_2_SELESAI],
+      ];
+      await rewriteSheet(SETTINGS_SHEET, newRows, sid);
+    }
+  } catch (error) {
     // Sheet doesn't exist, create it
+    console.log("[ensureSettingsSheet] Sheet doesn't exist or error occurred, creating...");
     let credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     if (!credentialsJson) throw new Error("Missing credentials");
     credentialsJson = credentialsJson.trim();
@@ -39,12 +91,18 @@ async function ensureSettingsSheet() {
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
     const sheets = google.sheets({ version: "v4", auth });
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: sid,
-      requestBody: {
-        requests: [{ addSheet: { properties: { title: SETTINGS_SHEET } } }],
-      },
-    });
+    
+    try {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: sid,
+        requestBody: {
+          requests: [{ addSheet: { properties: { title: SETTINGS_SHEET } } }],
+        },
+      });
+    } catch {
+      // Sheet might already exist but we can't access it, continue
+    }
+    
     // Write default header + values
     await rewriteSheet(SETTINGS_SHEET, [
       ["KEY", "VALUE"],
@@ -52,6 +110,10 @@ async function ensureSettingsSheet() {
       ["pin_out_enabled", "true"],
       ["url_ujian", ""],
       ["url_download_apk", ""],
+      ["SESI_1_MULAI", "07:30"],
+      ["SESI_1_SELESAI", "09:30"],
+      ["SESI_2_MULAI", "10:00"],
+      ["SESI_2_SELESAI", "12:00"],
     ], sid);
   }
 }

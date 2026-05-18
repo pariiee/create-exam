@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { settingToBoolean } from "@/lib/settings";
 
 export default function AdminSettingsPage() {
   const [pinOut, setPinOut] = useState("");
@@ -29,14 +28,20 @@ export default function AdminSettingsPage() {
         const s = data.settings || {};
         console.log("[Fetch Settings] Raw settings from server:", s);
         
-        // Always explicitly convert using settingToBoolean with true as default
-        // But log if value is missing
+        // Get all values with explicit checks
         const rawValue = s.pin_out_enabled;
-        const pinOutEnabledValue = settingToBoolean(rawValue, true);
-        console.log("[Fetch Settings] pin_out_enabled:", { raw: rawValue, converted: pinOutEnabledValue });
+        console.log("[Fetch Settings] raw pin_out_enabled value:", rawValue, "type:", typeof rawValue);
         
-        if (!rawValue) {
-          console.warn("[Fetch Settings] WARNING: pin_out_enabled is missing/empty from server!");
+        // Convert to boolean - this should NEVER default to true if the value exists
+        let pinOutEnabledValue: boolean;
+        if (rawValue === null || rawValue === undefined) {
+          // Value truly missing - check if this is a new install
+          console.warn("[Fetch Settings] pin_out_enabled is null/undefined - this shouldn't happen after init");
+          pinOutEnabledValue = true; // First-time default only
+        } else {
+          // Value exists, convert it properly without defaulting
+          pinOutEnabledValue = rawValue === "true" || rawValue === true || rawValue === "1" || rawValue === "on" ? true : false;
+          console.log("[Fetch Settings] Converted pin_out_enabled:", { raw: rawValue, converted: pinOutEnabledValue });
         }
         
         setPinOut(s.pin_out || "");
@@ -93,8 +98,11 @@ export default function AdminSettingsPage() {
       if (data.settings) {
         const s = data.settings;
         console.log("[Settings Save] Settings from response:", s);
-        const newPinOutEnabled = settingToBoolean(s.pin_out_enabled, true);
-        console.log("[Settings Save] Converted pin_out_enabled:", s.pin_out_enabled, "->", newPinOutEnabled);
+        
+        // Convert pin_out_enabled without defaulting
+        const rawValue = s.pin_out_enabled;
+        const newPinOutEnabled = rawValue === "true" || rawValue === true || rawValue === "1" || rawValue === "on" ? true : false;
+        console.log("[Settings Save] Converted pin_out_enabled:", rawValue, "->", newPinOutEnabled);
         
         setPinOut(s.pin_out || "");
         setPinOutEnabled(newPinOutEnabled);
