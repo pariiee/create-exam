@@ -256,7 +256,7 @@ export default function AdminSettingsPage() {
                   ...formSettings,
                   pin_out_enabled: !formSettings.pin_out_enabled,
                 });
-                console.log("[Toggle] After set, new value will be:', !formSettings.pin_out_enabled);
+                console.log("[Toggle] After set, new value will be:", !formSettings.pin_out_enabled);
               }}
               className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 formSettings.pin_out_enabled ? "bg-amber-500" : "bg-white/10"
