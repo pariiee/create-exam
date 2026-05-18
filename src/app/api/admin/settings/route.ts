@@ -94,6 +94,16 @@ export async function POST(request: NextRequest) {
     const existingRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
     const existing = readSettingsRows(existingRows);
 
+    // Convert pin_out_enabled to explicit boolean string
+    let pinOutEnabledStr: string;
+    if (typeof pin_out_enabled === "boolean") {
+      pinOutEnabledStr = pin_out_enabled ? "true" : "false";
+    } else if (pin_out_enabled !== null && pin_out_enabled !== undefined) {
+      pinOutEnabledStr = String(pin_out_enabled).toLowerCase() === "false" ? "false" : "true";
+    } else {
+      pinOutEnabledStr = existing["pin_out_enabled"] ?? "true";
+    }
+
     const merged = {
       pin_out: pin_out ?? existing["pin_out"] ?? "",
       url_ujian: url_ujian ?? existing["url_ujian"] ?? "",
@@ -102,7 +112,7 @@ export async function POST(request: NextRequest) {
       SESI_1_SELESAI: sesi_1_selesai ?? existing["SESI_1_SELESAI"] ?? "09:30",
       SESI_2_MULAI: sesi_2_mulai ?? existing["SESI_2_MULAI"] ?? "10:00",
       SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
-      pin_out_enabled: pin_out_enabled !== null && pin_out_enabled !== undefined ? String(pin_out_enabled).toLowerCase() : (existing["pin_out_enabled"] ?? "true"),
+      pin_out_enabled: pinOutEnabledStr,
     };
 
     await rewriteSheet(SETTINGS_SHEET, [

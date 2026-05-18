@@ -71,9 +71,23 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan.");
+      
+      // Update state immediately from response, then fetch untuk final sync
+      if (data.settings) {
+        const s = data.settings;
+        setPinOut(s.pin_out || "");
+        setPinOutEnabled(settingToBoolean(s.pin_out_enabled, true));
+        setUrlUjian(s.url_ujian || "");
+        setUrlDownloadApk(s.url_download_apk || "");
+        setSesi1Mulai(s.SESI_1_MULAI || "07:30");
+        setSesi1Selesai(s.SESI_1_SELESAI || "09:30");
+        setSesi2Mulai(s.SESI_2_MULAI || "10:00");
+        setSesi2Selesai(s.SESI_2_SELESAI || "12:00");
+      }
+      
       setMsg({ type: "success", text: "Semua pengaturan berhasil disimpan!" });
-      // Refresh data dari server untuk memastikan sync
-      setTimeout(() => fetchSettings(), 500);
+      // Fetch ulang untuk final sync dengan server
+      setTimeout(() => fetchSettings(), 300);
     } catch (err: unknown) {
       setMsg({ type: "error", text: err instanceof Error ? err.message : "Terjadi kesalahan." });
     } finally {
