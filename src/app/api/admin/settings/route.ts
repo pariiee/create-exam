@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       SESI_1_SELESAI: sesi_1_selesai ?? existing["SESI_1_SELESAI"] ?? "09:30",
       SESI_2_MULAI: sesi_2_mulai ?? existing["SESI_2_MULAI"] ?? "10:00",
       SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
-      pin_out_enabled: pin_out_enabled !== undefined ? String(pin_out_enabled) : existing["pin_out_enabled"] ?? "true",
+      pin_out_enabled: pin_out_enabled !== null && pin_out_enabled !== undefined ? String(pin_out_enabled).toLowerCase() : (existing["pin_out_enabled"] ?? "true"),
     };
 
     await rewriteSheet(SETTINGS_SHEET, [

@@ -72,6 +72,8 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan.");
       setMsg({ type: "success", text: "Semua pengaturan berhasil disimpan!" });
+      // Refresh data dari server untuk memastikan sync
+      setTimeout(() => fetchSettings(), 500);
     } catch (err: unknown) {
       setMsg({ type: "error", text: err instanceof Error ? err.message : "Terjadi kesalahan." });
     } finally {
