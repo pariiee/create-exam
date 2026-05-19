@@ -23,9 +23,10 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
           "Mendapatkan info ujian (PIN Out & URL Ujian). Hanya mengembalikan data jika ada sesi yang aktif berdasarkan jam saat ini. Sesi aktif ditentukan otomatis dari waktu SESI_1 dan SESI_2.",
         responseExample: JSON.stringify(
           {
-            pin_out: "12345",
-            url_ujian: "https://exam.example.com",
+            pin_out: "a1b2c3d4e5f6:encrypted_hex_string",
+            url_ujian: "f6e5d4c3b2a1:encrypted_hex_string",
             sesi: 1,
+            pin_out_enabled: true,
           },
           null,
           2
@@ -46,6 +47,30 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
             boleh_masuk: true,
             pesan: "Sesi 1 sedang berlangsung (07:30 - 09:30)",
           },
+          null,
+          2
+        ),
+      },
+    ],
+  },
+  {
+    category: "Report (Telegram)",
+    items: [
+      {
+        method: "POST",
+        path: "/v1.0/report",
+        description:
+          "Proxy laporan ke Telegram. Mengirim notifikasi ke channel Telegram saat siswa terdeteksi keluar aplikasi. Mendukung pengiriman foto (multipart/form-data).",
+        bodyParams: [
+          { name: "nama", type: "string", required: true, desc: "Nama siswa" },
+          { name: "kelas", type: "string", required: true, desc: "Kelas siswa" },
+          { name: "nis", type: "string", required: true, desc: "NIS siswa" },
+          { name: "sesi", type: "string", required: true, desc: "Nomor sesi (1 atau 2)" },
+          { name: "alasan", type: "string", required: true, desc: "Alasan/keterangan keluar" },
+          { name: "photo", type: "file (JPEG)", required: false, desc: "Bukti foto screenshot" },
+        ],
+        responseExample: JSON.stringify(
+          { success: true, foto_url: "https://api.telegram.org/file/bot.../photos/file.jpg" },
           null,
           2
         ),
