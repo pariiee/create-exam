@@ -71,7 +71,7 @@ Buka file JSON yang terdownload, copy **seluruh isinya** sebagai satu baris ke `
 
 ```env
 GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project",...}
-GOOGLE_SHEET_ID=1o_yHFj-hWxMGnkMKtCfHPk-ixFFpZHtOqoMmOvnlDRI
+GOOGLE_SHEET_ID=
 ```
 
 > **Tip**: Buka file JSON, select all, lalu paste. Pastikan dalam satu baris.
