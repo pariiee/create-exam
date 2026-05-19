@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sheets";
+import { verifyToken } from "@/lib/auth";
 
 const SHEETS = ["KELAS X", "KELAS XI", "KELAS XII"];
 
-function verifyToken(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) return false;
-  try {
-    const decoded = Buffer.from(auth.slice(7), "base64").toString();
-    const adminPassword = process.env.ADMIN_PASSWORD || "";
-    return decoded.startsWith(`admin:${adminPassword}:`);
-  } catch {
-    return false;
-  }
-}
-
 // GET - fetch all students
 export async function GET(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -51,7 +40,7 @@ export async function GET(request: NextRequest) {
 
 // DELETE - delete a student by NIS and sheet
 export async function DELETE(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -82,7 +71,7 @@ export async function DELETE(request: NextRequest) {
 
 // POST - add a new student
 export async function POST(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -143,7 +132,7 @@ export async function POST(request: NextRequest) {
 
 // PUT - edit a student
 export async function PUT(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

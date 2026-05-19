@@ -13,8 +13,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const saved = sessionStorage.getItem("admin_token");
-    if (saved) setToken(saved);
-    setChecking(false);
+    if (saved) {
+      // Verify token is still valid
+      fetch("/api/admin/settings", {
+        headers: { Authorization: `Bearer ${saved}` },
+      }).then((res) => {
+        if (res.status === 401) {
+          // Token expired or invalid
+          sessionStorage.removeItem("admin_token");
+          setToken(null);
+        } else {
+          setToken(saved);
+        }
+        setChecking(false);
+      }).catch(() => {
+        setToken(saved);
+        setChecking(false);
+      });
+    } else {
+      setChecking(false);
+    }
   }, []);
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {

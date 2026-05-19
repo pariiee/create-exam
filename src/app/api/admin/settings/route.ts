@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, getSettingsSheetId } from "@/lib/sheets";
 import { readSettingsRows } from "@/lib/settings";
 import { encrypt, decrypt } from "@/lib/crypto";
+import { verifyToken } from "@/lib/auth";
 import { google } from "googleapis";
 
 const SETTINGS_SHEET = "SETTINGS";
@@ -10,17 +11,6 @@ function getSettingsId(): string {
   return getSettingsSheetId();
 }
 
-function verifyToken(request: NextRequest): boolean {
-  const auth = request.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) return false;
-  try {
-    const decoded = Buffer.from(auth.slice(7), "base64").toString();
-    const adminPassword = process.env.ADMIN_PASSWORD || "";
-    return decoded.startsWith(`admin:${adminPassword}:`);
-  } catch {
-    return false;
-  }
-}
 
 async function ensureSettingsSheet() {
   const sid = getSettingsId();
@@ -120,7 +110,7 @@ async function ensureSettingsSheet() {
 }
 
 export async function GET(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -143,7 +133,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!verifyToken(request)) {
+  if (!(await verifyToken(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

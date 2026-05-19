@@ -56,6 +56,11 @@ export default function AdminSettingsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      if (res.status === 401) {
+        sessionStorage.removeItem("admin_token");
+        window.location.reload();
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
@@ -120,6 +125,11 @@ export default function AdminSettingsPage() {
         }),
       });
 
+      if (res.status === 401) {
+        sessionStorage.removeItem("admin_token");
+        window.location.reload();
+        return;
+      }
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Gagal menyimpan");
