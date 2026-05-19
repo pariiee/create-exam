@@ -213,6 +213,10 @@ export async function POST(request: NextRequest) {
     // Read back from sheet to verify save was successful
     const verifyRows = await getSheetData(SETTINGS_SHEET, getSettingsId());
     const verified = readSettingsRows(verifyRows);
+
+    // Decrypt pin_out dan url_ujian untuk tampilan admin
+    verified.pin_out = decrypt(verified.pin_out ?? "");
+    verified.url_ujian = decrypt(verified.url_ujian ?? "");
     
     console.log("[Settings POST] Verified from sheet:", verified);
     console.log("[Settings POST] Verified pin_out_enabled:", verified.pin_out_enabled);
