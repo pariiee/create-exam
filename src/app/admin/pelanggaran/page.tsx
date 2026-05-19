@@ -318,7 +318,7 @@ export default function PelanggaranPage() {
       {/* Photo Preview Modal */}
       {previewFoto && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setPreviewFoto(null)}>
-          <div className="relative max-w-3xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setPreviewFoto(null)}
               className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-gray-800 border border-white/10 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-all shadow-lg"
@@ -328,7 +328,7 @@ export default function PelanggaranPage() {
             <img
               src={previewFoto}
               alt="Bukti foto pelanggaran"
-              className="w-full h-auto max-h-[85vh] object-contain rounded-2xl border border-white/10 shadow-2xl"
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl border border-white/10 shadow-2xl"
             />
           </div>
         </div>
