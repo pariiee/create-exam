@@ -38,6 +38,7 @@ export default function PelanggaranPage() {
   });
   const [search, setSearch] = useState("");
   const [selectedNis, setSelectedNis] = useState<string | null>(null);
+  const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -247,11 +248,12 @@ export default function PelanggaranPage() {
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Jenis</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Alasan</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Foto</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-12 text-gray-500">Tidak ada data pelanggaran.</td></tr>
+                <tr><td colSpan={10} className="text-center py-12 text-gray-500">Tidak ada data pelanggaran.</td></tr>
               ) : (
                 filtered.map((d, i) => {
                   const badge = JENIS_BADGE[d.jenis] || { bg: "bg-gray-500/15 border-gray-500/30", text: "text-gray-400", label: d.jenis };
@@ -283,6 +285,22 @@ export default function PelanggaranPage() {
                           {d.status}
                         </span>
                       </td>
+                      <td className="py-3 px-4">
+                        {d.foto_url ? (
+                          <button
+                            onClick={() => setPreviewFoto(d.foto_url)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 text-xs font-medium transition-all"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Lihat
+                          </button>
+                        ) : (
+                          <span className="text-gray-600 text-xs">-</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -296,6 +314,25 @@ export default function PelanggaranPage() {
           </div>
         )}
       </div>
+
+      {/* Photo Preview Modal */}
+      {previewFoto && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setPreviewFoto(null)}>
+          <div className="relative max-w-3xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewFoto(null)}
+              className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-gray-800 border border-white/10 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-all shadow-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <img
+              src={previewFoto}
+              alt="Bukti foto pelanggaran"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-2xl border border-white/10 shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedNis && (
