@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, getSettingsSheetId } from "@/lib/sheets";
 import { readSettingsRows } from "@/lib/settings";
+import { encrypt, decrypt } from "@/lib/crypto";
 import { google } from "googleapis";
 
 const SETTINGS_SHEET = "SETTINGS";
@@ -130,6 +131,10 @@ export async function GET(request: NextRequest) {
 
     const settings = readSettingsRows(rows);
 
+    // Decrypt pin_out dan url_ujian untuk tampilan admin
+    settings.pin_out = decrypt(settings.pin_out ?? "");
+    settings.url_ujian = decrypt(settings.url_ujian ?? "");
+
     return NextResponse.json({ settings });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Server error";
@@ -176,9 +181,13 @@ export async function POST(request: NextRequest) {
       console.log("[Settings POST] Using existing:", existingValue, "->", pinOutEnabledStr);
     }
 
+    // Decrypt existing values untuk perbandingan
+    const existingPinOut = decrypt(existing["pin_out"] ?? "");
+    const existingUrlUjian = decrypt(existing["url_ujian"] ?? "");
+
     const merged = {
-      pin_out: pin_out ?? existing["pin_out"] ?? "",
-      url_ujian: url_ujian ?? existing["url_ujian"] ?? "",
+      pin_out: encrypt(pin_out ?? existingPinOut ?? ""),
+      url_ujian: encrypt(url_ujian ?? existingUrlUjian ?? ""),
       url_download_apk: url_download_apk ?? existing["url_download_apk"] ?? "",
       SESI_1_MULAI: sesi_1_mulai ?? existing["SESI_1_MULAI"] ?? "07:30",
       SESI_1_SELESAI: sesi_1_selesai ?? existing["SESI_1_SELESAI"] ?? "09:30",

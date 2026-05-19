@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSheetData, getSettingsSheetId } from "@/lib/sheets";
+import { decrypt } from "@/lib/crypto";
 
 const SETTINGS_SHEET = "SETTINGS";
 
@@ -15,7 +16,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      url_ujian: settings.url_ujian ?? "",
+      url_ujian: decrypt(settings.url_ujian ?? ""),
       url_download_apk: settings.url_download_apk ?? "",
     });
   } catch {
