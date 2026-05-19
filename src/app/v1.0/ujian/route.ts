@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSheetData, getSettingsSheetId } from "@/lib/sheets";
 import { readSettingsRows, settingToBoolean } from "@/lib/settings";
+import { encrypt } from "@/lib/crypto";
 
 const SETTINGS_SHEET = "SETTINGS";
 
@@ -44,8 +45,8 @@ export async function GET() {
 
     if (sesi1Active) {
       return NextResponse.json({
-        pin_out: settings.pin_out ?? "",
-        url_ujian: settings.url_ujian ?? "",
+        pin_out: encrypt(settings.pin_out ?? ""),
+        url_ujian: encrypt(settings.url_ujian ?? ""),
         sesi: 1,
         pin_out_enabled: settingToBoolean(settings.pin_out_enabled, true),
       });
@@ -53,8 +54,8 @@ export async function GET() {
 
     if (sesi2Active) {
       return NextResponse.json({
-        pin_out: settings.pin_out ?? "",
-        url_ujian: settings.url_ujian ?? "",
+        pin_out: encrypt(settings.pin_out ?? ""),
+        url_ujian: encrypt(settings.url_ujian ?? ""),
         sesi: 2,
         pin_out_enabled: settingToBoolean(settings.pin_out_enabled, true),
       });
