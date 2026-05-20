@@ -564,3 +564,27 @@ html.light-mode .shadow-black\/30 {
 html.light-mode .bg-gray-900 {
   background-color: #ffffff !important;
 }
+
+/* --- Footer: keep dark in light mode --- */
+html.light-mode footer .bg-gray-900\/60 {
+  background-color: rgba(17, 24, 39, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+html.light-mode footer .text-white,
+html.light-mode footer .text-xl,
+html.light-mode footer h4 {
+  color: #ffffff !important;
+}
+html.light-mode footer .text-gray-400,
+html.light-mode footer a.text-gray-400 {
+  color: #9ca3af !important;
+}
+html.light-mode footer .text-gray-500 {
+  color: #6b7280 !important;
+}
+html.light-mode footer .border-white\/5 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+html.light-mode footer a:hover {
+  color: #ffffff !important;
+}
