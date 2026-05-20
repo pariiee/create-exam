@@ -305,7 +305,35 @@ export default function SiswaPage() {
             {error}
           </div>
         ) : (
-          <div className="glass-card rounded-2xl overflow-hidden">
+          <>
+          {/* Mobile Card List */}
+          <div className="sm:hidden space-y-3">
+            {filtered.length === 0 ? (
+              <div className="glass-card rounded-2xl p-8 text-center text-gray-500">Tidak ada data ditemukan.</div>
+            ) : (
+              filtered.map((s, i) => (
+                <div key={`${s.sheet}-${s.nis}-${i}`} className="glass-card rounded-xl p-4 flex items-center gap-3">
+                  <span className="text-xs text-gray-500 font-mono w-6 shrink-0 text-center">{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white font-medium text-sm truncate">{s.nama}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono text-sky-400 text-xs">{s.nis}</span>
+                      <span className="text-gray-600">•</span>
+                      <span className="px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-medium">{s.kelas}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            {filtered.length > 0 && (
+              <div className="text-center text-xs text-gray-500 py-2">
+                Menampilkan {filtered.length} dari {students.length} siswa
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block glass-card rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -347,6 +375,7 @@ export default function SiswaPage() {
               </span>
             </div>
           </div>
+          </>
         )}
       </div>
 

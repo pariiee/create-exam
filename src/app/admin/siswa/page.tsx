@@ -284,16 +284,53 @@ export default function AdminSiswaPage() {
         />
       </div>
 
-      {/* Table */}
-      <div className="glass-card rounded-2xl overflow-hidden">
+      {/* Mobile Card List */}
+      <div className="sm:hidden space-y-3">
+        {filteredStudents.length === 0 ? (
+          <div className="glass-card rounded-2xl p-8 text-center text-gray-500">Tidak ada data siswa.</div>
+        ) : (
+          filteredStudents.map((s, i) => (
+            <div key={`${s.nis}-${s.sheet}-${i}`} className="glass-card rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-white font-medium truncate">{s.nama}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-mono text-sky-400 text-xs">{s.nis}</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs">{s.kelas}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => openEdit(s)} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 text-xs font-medium transition-all">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  Edit
+                </button>
+                <button onClick={() => setDeleteConfirm(s)} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20 text-xs font-medium transition-all">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  Hapus
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+        {filteredStudents.length > 0 && (
+          <div className="text-center text-xs text-gray-500 py-2">
+            Menampilkan {filteredStudents.length} dari {students.length} siswa
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden sm:block glass-card rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5">
-                <th className="text-left py-4 px-4 sm:px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">NIS</th>
-                <th className="text-left py-4 px-4 sm:px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nama</th>
-                <th className="text-left py-4 px-4 sm:px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Kelas</th>
-                <th className="text-right py-4 px-4 sm:px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aksi</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">NIS</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nama</th>
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Kelas</th>
+                <th className="text-right py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -302,12 +339,12 @@ export default function AdminSiswaPage() {
               ) : (
                 filteredStudents.map((s, i) => (
                   <tr key={`${s.nis}-${s.sheet}-${i}`} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 sm:px-6 font-mono text-sky-300">{s.nis}</td>
-                    <td className="py-3 px-4 sm:px-6 text-white">{s.nama}</td>
-                    <td className="py-3 px-4 sm:px-6">
+                    <td className="py-3 px-6 font-mono text-sky-300">{s.nis}</td>
+                    <td className="py-3 px-6 text-white">{s.nama}</td>
+                    <td className="py-3 px-6">
                       <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-300 text-xs">{s.kelas}</span>
                     </td>
-                    <td className="py-3 px-4 sm:px-6">
+                    <td className="py-3 px-6">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => openEdit(s)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 text-xs font-medium transition-all">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -326,7 +363,7 @@ export default function AdminSiswaPage() {
           </table>
         </div>
         {filteredStudents.length > 0 && (
-          <div className="px-4 sm:px-6 py-3 border-t border-white/5 text-xs text-gray-500">
+          <div className="px-6 py-3 border-t border-white/5 text-xs text-gray-500">
             Menampilkan {filteredStudents.length} dari {students.length} siswa
           </div>
         )}
