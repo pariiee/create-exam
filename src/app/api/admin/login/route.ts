@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { signToken, checkRateLimit, recordFailedAttempt, clearAttempts } from "@/lib/auth";
+
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Admin password belum dikonfigurasi." }, { status: 500 });
     }
 
-    if (!password || String(password) !== String(adminPassword)) {
+    if (!password || !safeCompare(String(password), String(adminPassword))) {
       recordFailedAttempt(request);
       return NextResponse.json({ error: "Password salah." }, { status: 401 });
     }

@@ -18,6 +18,8 @@ export async function signToken(): Promise<string> {
   return new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
+    .setIssuer("examcoy")
+    .setAudience("examcoy-admin")
     .setExpirationTime(TOKEN_EXPIRY)
     .sign(getSecret());
 }
@@ -31,7 +33,10 @@ export async function verifyToken(request: NextRequest): Promise<boolean> {
   if (!auth || !auth.startsWith("Bearer ")) return false;
   try {
     const token = auth.slice(7);
-    await jwtVerify(token, getSecret());
+    await jwtVerify(token, getSecret(), {
+      issuer: "examcoy",
+      audience: "examcoy-admin",
+    });
     return true;
   } catch {
     return false;
@@ -44,6 +49,9 @@ const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 function getClientIp(request: NextRequest): string {
+  // Prefer Next.js built-in ip (set by Vercel/platform, not spoofable)
+  const platformIp = (request as unknown as { ip?: string }).ip;
+  if (platformIp) return platformIp;
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||

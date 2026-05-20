@@ -20,7 +20,6 @@ async function ensureSettingsSheet() {
     // Check if sheet has proper structure (at least header + some data rows)
     // If empty or missing structure, reinitialize it
     if (!rows || rows.length < 2) {
-      console.log("[ensureSettingsSheet] Sheet exists but is empty or incomplete, reinitializing...");
       await rewriteSheet(SETTINGS_SHEET, [
         ["KEY", "VALUE"],
         ["pin_out", ""],
@@ -41,7 +40,6 @@ async function ensureSettingsSheet() {
     const missingKeys = requiredKeys.filter(key => !(key in settings));
     
     if (missingKeys.length > 0) {
-      console.log("[ensureSettingsSheet] Missing keys:", missingKeys, "- reinitializing...");
       const defaultSettings = {
         pin_out: "",
         pin_out_enabled: "true",
@@ -69,7 +67,6 @@ async function ensureSettingsSheet() {
     }
   } catch (error) {
     // Sheet doesn't exist, create it
-    console.log("[ensureSettingsSheet] Sheet doesn't exist or error occurred, creating...");
     let credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     if (!credentialsJson) throw new Error("Missing credentials");
     credentialsJson = credentialsJson.trim();
@@ -127,8 +124,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ settings });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Settings GET]", error);
+    return NextResponse.json({ error: "Gagal memuat pengaturan." }, { status: 500 });
   }
 }
 
@@ -145,8 +142,6 @@ export async function POST(request: NextRequest) {
       pin_out_enabled,
     } = await request.json();
 
-    console.log("[Settings POST] Received pin_out_enabled:", pin_out_enabled, "type:", typeof pin_out_enabled);
-
     await ensureSettingsSheet();
 
     // Read existing settings to preserve values not being updated
@@ -158,17 +153,14 @@ export async function POST(request: NextRequest) {
     if (typeof pin_out_enabled === "boolean") {
       // Direct boolean conversion
       pinOutEnabledStr = pin_out_enabled ? "true" : "false";
-      console.log("[Settings POST] Boolean conversion:", pin_out_enabled, "->", pinOutEnabledStr);
     } else if (pin_out_enabled !== null && pin_out_enabled !== undefined) {
       // String or other type conversion
       const normalized = String(pin_out_enabled).trim().toLowerCase();
       pinOutEnabledStr = normalized === "false" || normalized === "0" || normalized === "off" ? "false" : "true";
-      console.log("[Settings POST] String conversion:", pin_out_enabled, "->", pinOutEnabledStr);
     } else {
       // Use existing if not provided
       const existingValue = existing["pin_out_enabled"] ?? "true";
       pinOutEnabledStr = existingValue.toLowerCase() === "false" ? "false" : "true";
-      console.log("[Settings POST] Using existing:", existingValue, "->", pinOutEnabledStr);
     }
 
     // Decrypt existing values untuk perbandingan
@@ -185,8 +177,6 @@ export async function POST(request: NextRequest) {
       SESI_2_SELESAI: sesi_2_selesai ?? existing["SESI_2_SELESAI"] ?? "12:00",
       pin_out_enabled: pinOutEnabledStr,
     };
-
-    console.log("[Settings POST] Final merged object:", merged);
 
     await rewriteSheet(SETTINGS_SHEET, [
       ["KEY", "VALUE"],
@@ -208,13 +198,9 @@ export async function POST(request: NextRequest) {
     verified.pin_out = decrypt(verified.pin_out ?? "");
     verified.url_ujian = decrypt(verified.url_ujian ?? "");
     
-    console.log("[Settings POST] Verified from sheet:", verified);
-    console.log("[Settings POST] Verified pin_out_enabled:", verified.pin_out_enabled);
-
     return NextResponse.json({ success: true, message: "Settings berhasil disimpan!", settings: verified });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    console.error("[Settings POST Error]", msg, error);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Settings POST Error]", error);
+    return NextResponse.json({ error: "Gagal menyimpan pengaturan." }, { status: 500 });
   }
 }

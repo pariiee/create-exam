@@ -3,6 +3,17 @@ import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sh
 import { verifyToken } from "@/lib/auth";
 
 const SHEETS = ["KELAS X", "KELAS XI", "KELAS XII"];
+const MAX_NAMA_LENGTH = 100;
+
+// Sanitize input to prevent spreadsheet formula injection
+function sanitizeInput(value: string): string {
+  let sanitized = value.trim();
+  // Strip leading characters that trigger formula execution in spreadsheets
+  while (/^[=+\-@\t\r]/.test(sanitized)) {
+    sanitized = sanitized.slice(1);
+  }
+  return sanitized;
+}
 
 // GET - fetch all students
 export async function GET(request: NextRequest) {
@@ -33,8 +44,8 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ students: allStudents });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Students GET]", error);
+    return NextResponse.json({ error: "Gagal memuat data siswa." }, { status: 500 });
   }
 }
 
@@ -48,6 +59,9 @@ export async function DELETE(request: NextRequest) {
     const { nis, sheet } = await request.json();
     if (!nis || !sheet) {
       return NextResponse.json({ error: "NIS dan sheet diperlukan." }, { status: 400 });
+    }
+    if (!SHEETS.includes(sheet)) {
+      return NextResponse.json({ error: "Sheet tidak valid." }, { status: 400 });
     }
 
     const rows = await getSheetData(sheet);
@@ -64,8 +78,8 @@ export async function DELETE(request: NextRequest) {
     await rewriteSheet(sheet, [header, ...renumbered]);
     return NextResponse.json({ success: true, message: `Siswa dengan NIS ${nis} berhasil dihapus.` });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Students DELETE]", error);
+    return NextResponse.json({ error: "Gagal menghapus siswa." }, { status: 500 });
   }
 }
 
@@ -81,11 +95,19 @@ export async function POST(request: NextRequest) {
     if (!nama || typeof nama !== "string" || nama.trim().length === 0) {
       return NextResponse.json({ error: "Nama wajib diisi." }, { status: 400 });
     }
+    if (nama.trim().length > MAX_NAMA_LENGTH) {
+      return NextResponse.json({ error: `Nama maksimal ${MAX_NAMA_LENGTH} karakter.` }, { status: 400 });
+    }
     if (!nis || !/^\d{5}$/.test(nis)) {
       return NextResponse.json({ error: "NIS harus tepat 5 digit angka." }, { status: 400 });
     }
     if (!kelas || !allKelas.includes(kelas)) {
       return NextResponse.json({ error: "Kelas yang dipilih tidak valid." }, { status: 400 });
+    }
+
+    const safeName = sanitizeInput(nama);
+    if (safeName.length === 0) {
+      return NextResponse.json({ error: "Nama mengandung karakter tidak valid." }, { status: 400 });
     }
 
     // Check NIS uniqueness across all sheets
@@ -109,7 +131,7 @@ export async function POST(request: NextRequest) {
     const header = allRows.length > 0 ? allRows[0] : ["NO", "NIS", "NAMA", "KELAS"];
     const dataRows = allRows.slice(1).filter((row) => row[1] && row[1] !== "");
 
-    dataRows.push(["", nis.trim(), nama.trim(), kelas]);
+    dataRows.push(["", nis.trim(), safeName, kelas]);
 
     // Sort by NIS ascending
     dataRows.sort((a, b) => (a[1] || "").localeCompare(b[1] || ""));
@@ -125,8 +147,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Siswa berhasil ditambahkan!" });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Students POST]", error);
+    return NextResponse.json({ error: "Gagal menambahkan siswa." }, { status: 500 });
   }
 }
 
@@ -140,6 +162,17 @@ export async function PUT(request: NextRequest) {
     const { oldNis, oldSheet, nama, nis, kelas } = await request.json();
     if (!oldNis || !oldSheet || !nama || !nis || !kelas) {
       return NextResponse.json({ error: "Semua field diperlukan." }, { status: 400 });
+    }
+    if (!SHEETS.includes(oldSheet)) {
+      return NextResponse.json({ error: "Sheet tidak valid." }, { status: 400 });
+    }
+    if (typeof nama === "string" && nama.trim().length > MAX_NAMA_LENGTH) {
+      return NextResponse.json({ error: `Nama maksimal ${MAX_NAMA_LENGTH} karakter.` }, { status: 400 });
+    }
+
+    const safeName = sanitizeInput(String(nama));
+    if (safeName.length === 0) {
+      return NextResponse.json({ error: "Nama mengandung karakter tidak valid." }, { status: 400 });
     }
 
     const newSheet = resolveSheetName(kelas);
@@ -159,7 +192,7 @@ export async function PUT(request: NextRequest) {
     if (oldSheet === newSheet) {
       // Same sheet — add updated student back
       const newNo = String(renumberedOld.length + 1);
-      renumberedOld.push([newNo, nis, nama, kelas]);
+      renumberedOld.push([newNo, nis, safeName, kelas]);
       await rewriteSheet(oldSheet, [oldHeader, ...renumberedOld]);
     } else {
       // Different sheet — remove from old, add to new
@@ -169,13 +202,13 @@ export async function PUT(request: NextRequest) {
       const newHeader = newRows[0] || ["NO", "NIS", "NAMA", "KELAS"];
       const newData = newRows.slice(1);
       const newNo = String(newData.length + 1);
-      newData.push([newNo, nis, nama, kelas]);
+      newData.push([newNo, nis, safeName, kelas]);
       await rewriteSheet(newSheet, [newHeader, ...newData]);
     }
 
     return NextResponse.json({ success: true, message: "Data siswa berhasil diperbarui." });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Students PUT]", error);
+    return NextResponse.json({ error: "Gagal memperbarui data siswa." }, { status: 500 });
   }
 }
