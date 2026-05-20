@@ -304,7 +304,6 @@ html.light-mode .nav-surface {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* ===== Light Mode: Text Overrides ===== */
 html.light-mode .nav-surface,
 html.light-mode .nav-surface span,
 html.light-mode .nav-surface .lm-text {
@@ -320,42 +319,100 @@ html.light-mode .nav-surface a.lm-muted:hover {
   color: #1e293b;
 }
 
-/* ===== Light Mode: Headings & Content ===== */
-html.light-mode h1,
-html.light-mode h2,
-html.light-mode h3 {
-  color: #0f172a;
-}
+/* =============================================
+   LIGHT MODE: Comprehensive Tailwind Overrides
+   ============================================= */
 
-html.light-mode .lm-card {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+/* --- Text color remapping --- */
+html.light-mode .text-white {
+  color: #0f172a !important;
 }
-
-html.light-mode .lm-input {
-  background: rgba(0, 0, 0, 0.03) !important;
-  border-color: rgba(0, 0, 0, 0.12) !important;
-  color: #1e293b !important;
+html.light-mode .text-gray-300 {
+  color: #334155 !important;
 }
-
-html.light-mode .lm-input::placeholder {
+html.light-mode .text-gray-400 {
+  color: #64748b !important;
+}
+html.light-mode .text-gray-500 {
   color: #94a3b8 !important;
 }
-
-html.light-mode .lm-text-secondary {
+html.light-mode .text-gray-600 {
   color: #64748b !important;
 }
 
-html.light-mode .lm-text-muted {
+/* --- Headings --- */
+html.light-mode h1,
+html.light-mode h2,
+html.light-mode h3,
+html.light-mode h4 {
+  color: #0f172a !important;
+}
+
+/* --- Background overrides: white-alpha → gray-alpha --- */
+html.light-mode .bg-white\/5,
+html.light-mode .bg-white\/10,
+html.light-mode [class*="bg-white/[0.0"] {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+html.light-mode .hover\:bg-white\/5:hover,
+html.light-mode .hover\:bg-white\/10:hover,
+html.light-mode [class*="hover:bg-white/[0.0"]:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* --- Border overrides: white-alpha → dark-alpha --- */
+html.light-mode .border-white\/5,
+html.light-mode .border-white\/10,
+html.light-mode [class*="border-white/[0.0"] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* --- Input & Select elements --- */
+html.light-mode input,
+html.light-mode select,
+html.light-mode textarea {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: #1e293b !important;
+  color-scheme: light !important;
+}
+html.light-mode input::placeholder,
+html.light-mode textarea::placeholder {
   color: #94a3b8 !important;
 }
-
-html.light-mode .lm-border {
-  border-color: rgba(0, 0, 0, 0.06) !important;
+html.light-mode option {
+  background: #ffffff !important;
+  color: #1e293b !important;
 }
 
-/* ===== Light Mode: Gradient text adjustments ===== */
+/* --- Table overrides --- */
+html.light-mode table {
+  color: #334155;
+}
+html.light-mode th {
+  color: #64748b !important;
+}
+html.light-mode td {
+  color: #334155 !important;
+}
+html.light-mode td .text-white {
+  color: #0f172a !important;
+}
+html.light-mode tr.border-b {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+html.light-mode tr:hover {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* --- Glass card in light mode --- */
+html.light-mode .glass-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* --- Gradient text adjustments --- */
 html.light-mode .gradient-text {
   background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
   -webkit-background-clip: text;
@@ -370,7 +427,7 @@ html.light-mode .text-gradient-cool {
   background-clip: text;
 }
 
-/* ===== Light Mode: Neon cards ===== */
+/* --- Neon cards in light mode --- */
 html.light-mode .neon-card-sky { box-shadow: 0 2px 8px rgba(56, 189, 248, 0.12); }
 html.light-mode .neon-card-sky:hover { box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2); }
 html.light-mode .neon-card-cyan { box-shadow: 0 2px 8px rgba(6, 182, 212, 0.12); }
@@ -380,8 +437,130 @@ html.light-mode .neon-card-blue:hover { box-shadow: 0 4px 16px rgba(59, 130, 246
 html.light-mode .neon-card-emerald { box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12); }
 html.light-mode .neon-card-emerald:hover { box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2); }
 
-/* ===== Light Mode: Glow border ===== */
+/* --- Glow border in light mode --- */
 html.light-mode .glow-border {
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2),
               0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Admin sidebar in light mode --- */
+html.light-mode .nav-surface.lg\:flex {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* --- Misc: loading spinners, badges keep their accent colors --- */
+html.light-mode .text-sky-400,
+html.light-mode .text-sky-300 { color: #0284c7 !important; }
+html.light-mode .text-indigo-400,
+html.light-mode .text-indigo-300 { color: #4f46e5 !important; }
+html.light-mode .text-red-400 { color: #dc2626 !important; }
+html.light-mode .text-purple-400 { color: #7c3aed !important; }
+html.light-mode .text-emerald-400 { color: #059669 !important; }
+html.light-mode .text-amber-400 { color: #d97706 !important; }
+html.light-mode .text-cyan-400 { color: #0891b2 !important; }
+html.light-mode .text-blue-400,
+html.light-mode .text-blue-300 { color: #2563eb !important; }
+html.light-mode .text-teal-400 { color: #0d9488 !important; }
+
+/* --- Background orbs: reduce glow in light mode --- */
+html.light-mode [class*="bg-sky-500/1"][class*="blur-"],
+html.light-mode [class*="bg-cyan-500/1"][class*="blur-"],
+html.light-mode [class*="bg-blue-500/"][class*="blur-"],
+html.light-mode [class*="bg-sky-400/"][class*="blur-"] {
+  opacity: 0.4;
+}
+
+/* --- Button/badge background adjustments --- */
+html.light-mode [class*="bg-sky-500/1"] { background-color: rgba(14, 165, 233, 0.1) !important; }
+html.light-mode [class*="bg-indigo-500/1"],
+html.light-mode [class*="bg-indigo-600/2"] { background-color: rgba(99, 102, 241, 0.1) !important; }
+html.light-mode [class*="bg-red-500/1"],
+html.light-mode [class*="bg-red-600/1"] { background-color: rgba(239, 68, 68, 0.08) !important; }
+html.light-mode [class*="bg-purple-500/1"] { background-color: rgba(139, 92, 246, 0.1) !important; }
+html.light-mode [class*="bg-emerald-500/1"],
+html.light-mode [class*="bg-emerald-600/2"] { background-color: rgba(16, 185, 129, 0.1) !important; }
+html.light-mode [class*="bg-amber-500/1"] { background-color: rgba(245, 158, 11, 0.1) !important; }
+html.light-mode [class*="bg-cyan-500/1"] { background-color: rgba(6, 182, 212, 0.1) !important; }
+html.light-mode [class*="bg-blue-500/1"] { background-color: rgba(59, 130, 246, 0.1) !important; }
+html.light-mode [class*="bg-gray-500/1"],
+html.light-mode [class*="bg-gray-500/2"] { background-color: rgba(100, 116, 139, 0.1) !important; }
+
+/* --- Sesi card borders --- */
+html.light-mode [class*="border-emerald-500/2"] { border-color: rgba(16, 185, 129, 0.25) !important; }
+html.light-mode [class*="border-sky-500/2"],
+html.light-mode [class*="border-sky-400/2"] { border-color: rgba(14, 165, 233, 0.25) !important; }
+html.light-mode [class*="border-indigo-500/3"] { border-color: rgba(99, 102, 241, 0.25) !important; }
+html.light-mode [class*="border-red-500/2"],
+html.light-mode [class*="border-red-500/3"] { border-color: rgba(239, 68, 68, 0.2) !important; }
+html.light-mode [class*="border-purple-500/3"] { border-color: rgba(139, 92, 246, 0.25) !important; }
+html.light-mode [class*="border-emerald-500/3"] { border-color: rgba(16, 185, 129, 0.25) !important; }
+html.light-mode [class*="border-blue-500/2"] { border-color: rgba(59, 130, 246, 0.25) !important; }
+html.light-mode [class*="border-gray-500/3"] { border-color: rgba(100, 116, 139, 0.2) !important; }
+
+/* --- Font mono text (times, countdown) --- */
+html.light-mode .font-mono {
+  color: #334155;
+}
+
+/* --- Modals in light mode --- */
+html.light-mode .fixed.bg-black\/60,
+html.light-mode .fixed.bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.35) !important;
+}
+
+/* --- Admin layout login page --- */
+html.light-mode .bg-gray-950\/80,
+html.light-mode .bg-gray-950\/90,
+html.light-mode .bg-gray-900\/80 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+html.light-mode .bg-gray-800\/80 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* --- Code blocks & pre --- */
+html.light-mode pre {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #334155 !important;
+}
+html.light-mode code {
+  color: #334155;
+}
+html.light-mode .bg-black\/30 {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+}
+
+/* --- Additional accent text colors for light mode --- */
+html.light-mode .text-purple-300 { color: #7c3aed !important; }
+html.light-mode .text-indigo-300 { color: #4f46e5 !important; }
+html.light-mode .text-emerald-300 { color: #059669 !important; }
+html.light-mode .text-sky-300 { color: #0284c7 !important; }
+
+/* --- Additional accent text: 300-level shades --- */
+html.light-mode .text-red-300 { color: #dc2626 !important; }
+html.light-mode .text-amber-300 { color: #d97706 !important; }
+html.light-mode .text-cyan-300 { color: #0891b2 !important; }
+html.light-mode .text-emerald-300 { color: #059669 !important; }
+
+/* --- Hover text overrides --- */
+html.light-mode .hover\:text-white:hover { color: #0f172a !important; }
+html.light-mode .hover\:text-gray-300:hover { color: #334155 !important; }
+html.light-mode .hover\:text-red-300:hover { color: #b91c1c !important; }
+html.light-mode .hover\:text-sky-300:hover { color: #0369a1 !important; }
+
+/* --- Accent border overrides --- */
+html.light-mode [class*="border-cyan-400/3"] { border-color: rgba(6, 182, 212, 0.3) !important; }
+html.light-mode [class*="border-purple-400/3"] { border-color: rgba(139, 92, 246, 0.3) !important; }
+html.light-mode [class*="border-amber-500/2"] { border-color: rgba(245, 158, 11, 0.25) !important; }
+
+/* --- Shadow overrides --- */
+html.light-mode .shadow-2xl,
+html.light-mode .shadow-black\/30 {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* --- Admin login form --- */
+html.light-mode .bg-gray-900 {
+  background-color: #ffffff !important;
 }
