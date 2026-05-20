@@ -138,9 +138,9 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
       {
         method: "POST",
         path: "/register-exam",
-        description: "Mendaftarkan siswa baru untuk ujian. NIS harus unik di seluruh kelas.",
+        description: "Mendaftarkan siswa baru untuk ujian. NIS harus unik di seluruh kelas. Nama di-sanitasi (maks 100 karakter, karakter formula di-strip).",
         bodyParams: [
-          { name: "nama", type: "string", required: true, desc: "Nama lengkap siswa" },
+          { name: "nama", type: "string", required: true, desc: "Nama lengkap siswa (maks 100 karakter)" },
           { name: "nis", type: "string", required: true, desc: "NIS 5 digit" },
           { name: "kelas", type: "string", required: true, desc: "Kelas siswa (misal: XII RPL 1)" },
         ],
@@ -182,7 +182,7 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
       {
         method: "GET",
         path: "/api/total-users",
-        description: "Mendapatkan total jumlah siswa yang terdaftar di semua kelas.",
+        description: "Mendapatkan total jumlah siswa yang terdaftar di semua kelas. Di-cache selama 60 detik untuk mencegah abuse API quota.",
         responseExample: JSON.stringify({ total: 150 }, null, 2),
       },
     ],
@@ -193,12 +193,12 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
       {
         method: "POST",
         path: "/api/admin/login",
-        description: "Login admin. Mengembalikan token untuk akses endpoint admin lainnya.",
+        description: "Login admin. Mengembalikan JWT token (2 jam) untuk akses endpoint admin. Rate limited: maks 5 percobaan per 15 menit per IP. Password dibandingkan dengan timing-safe comparison.",
         bodyParams: [
           { name: "password", type: "string", required: true, desc: "Password admin" },
         ],
         responseExample: JSON.stringify(
-          { token: "YWRtaW46cGFzc3dvcmQ6..." },
+          { success: true, token: "eyJhbGciOiJIUzI1NiIs..." },
           null,
           2
         ),
@@ -228,9 +228,10 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
         method: "POST",
         path: "/api/admin/settings",
         auth: true,
-        description: "Menyimpan pengaturan aplikasi. Field yang tidak dikirim akan tetap menggunakan nilai sebelumnya.",
+        description: "Menyimpan pengaturan aplikasi. Field yang tidak dikirim akan tetap menggunakan nilai sebelumnya. PIN dan URL ujian dienkripsi saat disimpan.",
         bodyParams: [
-          { name: "pin_out", type: "string", required: false, desc: "PIN keluar ujian (5 digit)" },
+          { name: "pin_out", type: "string", required: false, desc: "PIN keluar ujian" },
+          { name: "pin_out_enabled", type: "boolean", required: false, desc: "Aktifkan/nonaktifkan PIN keluar" },
           { name: "url_ujian", type: "string", required: false, desc: "URL halaman ujian" },
           { name: "url_download_apk", type: "string", required: false, desc: "URL download APK" },
           { name: "sesi_1_mulai", type: "string", required: false, desc: "Jam mulai sesi 1 (HH:mm)" },
@@ -263,15 +264,16 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
         method: "PUT",
         path: "/api/admin/students",
         auth: true,
-        description: "Update data siswa berdasarkan NIS.",
+        description: "Update data siswa berdasarkan NIS. Nama di-sanitasi untuk mencegah spreadsheet injection (maks 100 karakter). Sheet harus salah satu dari: KELAS X, KELAS XI, KELAS XII.",
         bodyParams: [
-          { name: "nis", type: "string", required: true, desc: "NIS siswa yang ingin diupdate" },
-          { name: "nama", type: "string", required: true, desc: "Nama baru" },
+          { name: "oldNis", type: "string", required: true, desc: "NIS lama siswa" },
+          { name: "oldSheet", type: "string", required: true, desc: "Sheet asal (KELAS X / KELAS XI / KELAS XII)" },
+          { name: "nis", type: "string", required: true, desc: "NIS baru (5 digit)" },
+          { name: "nama", type: "string", required: true, desc: "Nama baru (maks 100 karakter)" },
           { name: "kelas", type: "string", required: true, desc: "Kelas baru" },
-          { name: "sheet", type: "string", required: true, desc: "Sheet asal (KELAS X / KELAS XI / KELAS XII)" },
         ],
         responseExample: JSON.stringify(
-          { success: true },
+          { success: true, message: "Data siswa berhasil diperbarui." },
           null,
           2
         ),
@@ -280,28 +282,13 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
         method: "DELETE",
         path: "/api/admin/students",
         auth: true,
-        description: "Menghapus data siswa berdasarkan NIS.",
+        description: "Menghapus data siswa berdasarkan NIS. Sheet harus salah satu dari: KELAS X, KELAS XI, KELAS XII.",
         bodyParams: [
           { name: "nis", type: "string", required: true, desc: "NIS siswa yang ingin dihapus" },
-          { name: "sheet", type: "string", required: true, desc: "Sheet asal" },
+          { name: "sheet", type: "string", required: true, desc: "Sheet asal (KELAS X / KELAS XI / KELAS XII)" },
         ],
         responseExample: JSON.stringify(
-          { success: true },
-          null,
-          2
-        ),
-      },
-      {
-        method: "GET",
-        path: "/api/health",
-        description: "Health check: verifikasi environment variables dan koneksi Google Sheets.",
-        responseExample: JSON.stringify(
-          {
-            GOOGLE_SERVICE_ACCOUNT_JSON: "SET (length: 2400, starts: {\"type\":\"service_ac...)",
-            GOOGLE_SHEET_ID: "SET (length: 44)",
-            ADMIN_PASSWORD: "SET (length: 8)",
-            JSON_PARSE: "OK - keys: type, project_id, ...",
-          },
+          { success: true, message: "Siswa dengan NIS 12345 berhasil dihapus." },
           null,
           2
         ),
@@ -474,7 +461,7 @@ export default function AdminDocsPage() {
 
       <div className="mt-8 rounded-xl p-4 bg-indigo-500/5 border border-indigo-500/10">
         <p className="text-xs text-indigo-300">
-          <strong>Catatan:</strong> Sesi aktif ditentukan otomatis berdasarkan jam saat ini (WIB). Tidak perlu mengatur sesi aktif atau tanggal ujian secara manual. Jika jam berada dalam rentang sesi 1 atau sesi 2, maka sesi tersebut aktif.
+          <strong>Catatan:</strong> Sesi aktif ditentukan otomatis berdasarkan jam saat ini (WIB). Semua endpoint admin memerlukan JWT token via header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>. Token berlaku 2 jam. Rate limit login: 5 percobaan / 15 menit. Input nama di-sanitasi untuk mencegah spreadsheet injection. Security headers diterapkan via middleware (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS).
         </p>
       </div>
     </div>
