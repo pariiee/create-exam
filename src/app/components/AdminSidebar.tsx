@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import ThemeToggle from "./ThemeToggle";
 
 const menuItems = [
   {
@@ -58,7 +59,7 @@ export default function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-gray-950/80 backdrop-blur-xl border-r border-white/5">
+      <aside className="nav-surface hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-gray-950/80 backdrop-blur-xl border-r border-white/5">
         <div className="flex items-center gap-3 px-6 h-16 border-b border-white/5">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +67,7 @@ export default function AdminSidebar({ onLogout }: { onLogout: () => void }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <span className="text-xl font-bold tracking-tight">Admin<span className="gradient-text">Panel</span></span>
+          <span className="text-xl font-bold tracking-tight">admin<span className="gradient-text">examcoy</span></span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -90,6 +91,10 @@ export default function AdminSidebar({ onLogout }: { onLogout: () => void }) {
         </nav>
 
         <div className="px-3 py-4 border-t border-white/5 space-y-2">
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mode</span>
+            <ThemeToggle />
+          </div>
           <a href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -106,7 +111,7 @@ export default function AdminSidebar({ onLogout }: { onLogout: () => void }) {
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-xl border-t border-white/5">
+      <nav className="nav-surface lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-xl border-t border-white/5">
         <div className="flex items-center justify-around px-2 py-2">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;

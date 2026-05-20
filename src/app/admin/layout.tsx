@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "@/app/components/AdminSidebar";
 import { safeJson } from "@/lib/safeFetch";
+import ThemeToggle from "@/app/components/ThemeToggle";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
@@ -130,7 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar onLogout={handleLogout} />
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-40 bg-gray-950/80 backdrop-blur-xl border-b border-white/5">
+      <header className="nav-surface lg:hidden sticky top-0 z-40 bg-gray-950/80 backdrop-blur-xl border-b border-white/5">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -139,8 +140,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <span className="text-lg font-bold">Admin<span className="gradient-text">Panel</span></span>
+            <span className="text-lg font-bold">admin<span className="gradient-text">examcoy</span></span>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 

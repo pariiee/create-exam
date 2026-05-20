@@ -10,9 +10,29 @@ html {
 }
 
 body {
-  background: #030712;
-  color: #f3f4f6;
+  background: var(--color-bg, #030712);
+  color: var(--color-text, #f3f4f6);
   font-family: "Inter", system-ui, sans-serif;
+}
+
+/* ===== CSS Variables ===== */
+:root {
+  --color-bg: #030712;
+  --color-text: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-nav: rgba(17, 24, 39, 0.8);
+}
+
+html.light-mode {
+  --color-bg: #f1f5f9;
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-surface: rgba(255, 255, 255, 0.9);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-nav: rgba(255, 255, 255, 0.85);
+  color-scheme: light;
 }
 
 .gradient-text {
@@ -23,9 +43,13 @@ body {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-surface);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
+}
+
+html.light-mode .glass-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .glow-border {
@@ -40,8 +64,18 @@ body {
   background-size: 60px 60px;
 }
 
+html.light-mode .bg-grid {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+}
+
 .input-glow:focus {
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+html.light-mode .input-glow:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 @keyframes float {
@@ -185,6 +219,10 @@ body {
   height: 100%;
 }
 
+html.light-mode .neon-card-inner {
+  background: #ffffff;
+}
+
 /* Pelajar image gentle breathing animation */
 @keyframes breathe {
   0%, 100% { transform: scale(1) translateY(0); }
@@ -238,4 +276,112 @@ body {
 
 .modal-dialog::backdrop {
   background: rgba(0, 0, 0, 0.6);
+}
+
+html.light-mode .modal-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Theme Toggle Button ===== */
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html.light-mode .theme-toggle {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Light Mode: Navigation Surfaces ===== */
+.nav-surface {
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+html.light-mode .nav-surface {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ===== Light Mode: Text Overrides ===== */
+html.light-mode .nav-surface,
+html.light-mode .nav-surface span,
+html.light-mode .nav-surface .lm-text {
+  color: #1e293b;
+}
+
+html.light-mode .nav-surface a.lm-muted,
+html.light-mode .nav-surface .lm-muted {
+  color: #64748b;
+}
+
+html.light-mode .nav-surface a.lm-muted:hover {
+  color: #1e293b;
+}
+
+/* ===== Light Mode: Headings & Content ===== */
+html.light-mode h1,
+html.light-mode h2,
+html.light-mode h3 {
+  color: #0f172a;
+}
+
+html.light-mode .lm-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+html.light-mode .lm-input {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #1e293b !important;
+}
+
+html.light-mode .lm-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light-mode .lm-text-secondary {
+  color: #64748b !important;
+}
+
+html.light-mode .lm-text-muted {
+  color: #94a3b8 !important;
+}
+
+html.light-mode .lm-border {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ===== Light Mode: Gradient text adjustments ===== */
+html.light-mode .gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html.light-mode .text-gradient-cool {
+  background: linear-gradient(135deg, #0284c7, #0369a1, #075985);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== Light Mode: Neon cards ===== */
+html.light-mode .neon-card-sky { box-shadow: 0 2px 8px rgba(56, 189, 248, 0.12); }
+html.light-mode .neon-card-sky:hover { box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2); }
+html.light-mode .neon-card-cyan { box-shadow: 0 2px 8px rgba(6, 182, 212, 0.12); }
+html.light-mode .neon-card-cyan:hover { box-shadow: 0 4px 16px rgba(6, 182, 212, 0.2); }
+html.light-mode .neon-card-blue { box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12); }
+html.light-mode .neon-card-blue:hover { box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2); }
+html.light-mode .neon-card-emerald { box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12); }
+html.light-mode .neon-card-emerald:hover { box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2); }
+
+/* ===== Light Mode: Glow border ===== */
+html.light-mode .glow-border {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2),
+              0 4px 12px rgba(0, 0, 0, 0.06);
 }

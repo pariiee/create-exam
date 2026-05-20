@@ -30,6 +30,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [togglingPin, setTogglingPin] = useState(false);
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
 
@@ -94,6 +95,68 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  // Auto-save PIN toggle
+  async function togglePinEnabled() {
+    const newValue = !formSettings.pin_out_enabled;
+    setFormSettings({ ...formSettings, pin_out_enabled: newValue });
+    setTogglingPin(true);
+    setMsg(null);
+
+    try {
+      const token = getToken();
+      if (!token) throw new Error("Token tidak ditemukan");
+
+      const base = savedSettings || formSettings;
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          pin_out: base.pin_out,
+          pin_out_enabled: newValue,
+          url_ujian: base.url_ujian,
+          url_download_apk: base.url_download_apk,
+          sesi_1_mulai: base.sesi_1_mulai,
+          sesi_1_selesai: base.sesi_1_selesai,
+          sesi_2_mulai: base.sesi_2_mulai,
+          sesi_2_selesai: base.sesi_2_selesai,
+        }),
+      });
+
+      if (res.status === 401) {
+        sessionStorage.removeItem("admin_token");
+        window.location.reload();
+        return;
+      }
+      if (!res.ok) throw new Error("Gagal menyimpan");
+
+      const data = await res.json();
+      if (data.settings) {
+        const newSettings: SettingsState = {
+          pin_out: data.settings.pin_out || "",
+          pin_out_enabled: parsePinOutEnabled(data.settings.pin_out_enabled),
+          url_ujian: data.settings.url_ujian || "",
+          url_download_apk: data.settings.url_download_apk || "",
+          sesi_1_mulai: data.settings.SESI_1_MULAI || "07:30",
+          sesi_1_selesai: data.settings.SESI_1_SELESAI || "09:30",
+          sesi_2_mulai: data.settings.SESI_2_MULAI || "10:00",
+          sesi_2_selesai: data.settings.SESI_2_SELESAI || "12:00",
+        };
+        setSavedSettings(newSettings);
+        setFormSettings((prev) => ({ ...prev, pin_out_enabled: newSettings.pin_out_enabled }));
+      }
+
+      setMsg({ type: "success", text: newValue ? "\u2713 PIN OUT diaktifkan" : "\u2713 PIN OUT dinonaktifkan" });
+    } catch (err) {
+      setFormSettings((prev) => ({ ...prev, pin_out_enabled: !newValue }));
+      setMsg({ type: "error", text: err instanceof Error ? err.message : "Gagal menyimpan toggle" });
+    } finally {
+      setTogglingPin(false);
+    }
+  }
 
   // Handle save
   async function handleSave(e: React.FormEvent) {
@@ -258,26 +321,25 @@ export default function AdminSettingsPage() {
                   : "Siswa langsung selesai tanpa PIN OUT"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                console.log("[Toggle] Before:", formSettings.pin_out_enabled);
-                setFormSettings({
-                  ...formSettings,
-                  pin_out_enabled: !formSettings.pin_out_enabled,
-                });
-                console.log("[Toggle] After set, new value will be:", !formSettings.pin_out_enabled);
-              }}
-              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                formSettings.pin_out_enabled ? "bg-amber-500" : "bg-white/10"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                  formSettings.pin_out_enabled ? "translate-x-5" : "translate-x-0"
+            <div className="flex items-center gap-2">
+              {togglingPin && (
+                <div className="animate-spin w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full" />
+              )}
+              <button
+                type="button"
+                disabled={togglingPin}
+                onClick={togglePinEnabled}
+                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                  formSettings.pin_out_enabled ? "bg-amber-500" : "bg-white/10"
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    formSettings.pin_out_enabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
 
