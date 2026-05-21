@@ -57,7 +57,7 @@ GOOGLE_SETTINGS_SHEET_ID=your_settings_sheet_id
 # Admin
 ADMIN_PASSWORD=your_admin_password
 
-# Encryption (AES-256-CBC untuk url_ujian & pin_out)
+# Encryption 
 ENCRYPTION_KEY=your_encryption_key
 
 # Telegram Bot (notifikasi pelanggaran)
@@ -130,65 +130,7 @@ Sheet **SETTINGS** dan **PELANGGARAN** akan dibuat otomatis oleh aplikasi.
 3. Di **Environment Variables**, tambahkan semua variable dari `.env.example`
 4. Klik **Deploy**
 
----
 
-## API Routes
-
-### Public (tanpa auth)
-
-| Method | URI | Deskripsi | Rate Limit |
-|--------|-----|-----------|------------|
-| POST | `/register-exam` | Daftarkan siswa ke Google Sheet | 5 req / 2 menit per IP |
-| POST | `/check-nis` | Cek NIS di semua sheet | - |
-| GET | `/exam-info` | Ambil URL ujian & URL download APK | - |
-| GET | `/siswa/api?sheet=KELAS X` | Ambil data siswa per sheet | - |
-| GET | `/api/total-users` | Total siswa terdaftar (cached 60s) | - |
-| GET | `/api/health` | Health check | - |
-
-### Admin (butuh JWT Bearer token)
-
-| Method | URI | Deskripsi | Rate Limit |
-|--------|-----|-----------|------------|
-| POST | `/api/admin/login` | Login admin, dapat JWT | 5 req / 15 menit per IP |
-| GET | `/api/admin/students` | Ambil semua data siswa | - |
-| POST | `/api/admin/students` | Tambah siswa baru | - |
-| PUT | `/api/admin/students` | Edit data siswa | - |
-| DELETE | `/api/admin/students` | Hapus siswa | - |
-| GET | `/api/admin/settings` | Ambil pengaturan ujian | - |
-| POST | `/api/admin/settings` | Simpan pengaturan ujian | - |
-
-### App ExamCoy (endpoint untuk app Android)
-
-| Method | URI | Deskripsi | Rate Limit |
-|--------|-----|-----------|------------|
-| GET | `/v1.0/sesi-ujian` | Cek sesi ujian yang aktif | - |
-| GET | `/v1.0/ujian` | Ambil data ujian (pin, URL, sesi) | - |
-| POST | `/v1.0/lapor-pelanggaran` | Laporkan pelanggaran siswa | 30 req / 1 menit per IP |
-| GET | `/v1.0/pelanggaran` | Ambil data pelanggaran (filter sesi/tanggal) | - |
-| POST | `/v1.0/report` | Kirim laporan + foto ke Telegram Bot | - |
-
-### Jenis Pelanggaran
-
-| Kode | Deskripsi | Kategori |
-|------|-----------|----------|
-| `KELUAR_APP` | Siswa keluar/minimize app saat ujian | Keluar App |
-| `OVERLAY_TERDETEKSI` | Ada overlay/floating app terdeteksi | Kecurangan Teknis |
-| `UNPIN_UJIAN` | Siswa paksa unpin/lepas screen lock | Kecurangan Teknis |
-
-> Di dashboard monitoring, `OVERLAY_TERDETEKSI` dan `UNPIN_UJIAN` digabung dalam satu grup **"Overlay / Unpin"**. Data asli tetap tersimpan terpisah di Google Sheet.
-
----
-
-## Security
-
-- **Rate Limiting** — In-memory per IP untuk endpoint register, login, dan lapor pelanggaran
-- **JWT Authentication** — Admin endpoints dilindungi JWT (HS256, 2 jam expiry)
-- **Security Headers** — X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS, X-XSS-Protection, Permissions-Policy
-- **Timing-safe compare** — Login password pakai `crypto.timingSafeEqual`
-- **Input sanitization** — Mencegah spreadsheet formula injection
-- **Encrypted settings** — `pin_out` dan `url_ujian` dienkripsi AES-256-CBC di Google Sheet
-
----
 
 ## License
 
