@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sheets";
+import { registerLimiter } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 requests per 2 minutes per IP
+    const rateCheck = registerLimiter.check(request);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: `Terlalu banyak percobaan. Coba lagi dalam ${rateCheck.retryAfterSeconds} detik.` },
+        { status: 429 }
+      );
+    }
+    registerLimiter.record(request);
+
     const body = await request.json();
     const { nama, nis, kelas } = body;
 

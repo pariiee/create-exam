@@ -83,13 +83,13 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
       {
         method: "POST",
         path: "/v1.0/lapor-pelanggaran",
-        description: "Melaporkan pelanggaran siswa. Data akan dicatat ke Google Sheet PELANGGARAN dengan timestamp otomatis (WIB).",
+        description: "Melaporkan pelanggaran siswa. Data akan dicatat ke Google Sheet PELANGGARAN dengan timestamp otomatis (WIB). Rate limited: maks 30 request per menit per IP.",
         bodyParams: [
           { name: "nis", type: "string", required: true, desc: "NIS siswa (5 digit)" },
           { name: "nama", type: "string", required: true, desc: "Nama siswa" },
           { name: "kelas", type: "string", required: true, desc: "Kelas siswa" },
           { name: "sesi", type: "number", required: true, desc: "Nomor sesi (1 atau 2)" },
-          { name: "jenis", type: "string", required: true, desc: "KELUAR_APP | OVERLAY_TERDETEKSI" },
+          { name: "jenis", type: "string", required: true, desc: "KELUAR_APP | OVERLAY_TERDETEKSI | UNPIN_UJIAN" },
           { name: "alasan", type: "string", required: false, desc: "Keterangan tambahan" },
           { name: "foto_url", type: "string", required: false, desc: "URL bukti foto" },
         ],
@@ -138,7 +138,7 @@ const endpoints: { category: string; items: Endpoint[] }[] = [
       {
         method: "POST",
         path: "/register-exam",
-        description: "Mendaftarkan siswa baru untuk ujian. NIS harus unik di seluruh kelas. Nama di-sanitasi (maks 100 karakter, karakter formula di-strip).",
+        description: "Mendaftarkan siswa baru untuk ujian. NIS harus unik di seluruh kelas. Nama di-sanitasi (maks 100 karakter, karakter formula di-strip). Rate limited: maks 5 request per 2 menit per IP.",
         bodyParams: [
           { name: "nama", type: "string", required: true, desc: "Nama lengkap siswa (maks 100 karakter)" },
           { name: "nis", type: "string", required: true, desc: "NIS 5 digit" },
@@ -461,7 +461,7 @@ export default function AdminDocsPage() {
 
       <div className="mt-8 rounded-xl p-4 bg-indigo-500/5 border border-indigo-500/10">
         <p className="text-xs text-indigo-300">
-          <strong>Catatan:</strong> Sesi aktif ditentukan otomatis berdasarkan jam saat ini (WIB). Semua endpoint admin memerlukan JWT token via header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>. Token berlaku 2 jam. Rate limit login: 5 percobaan / 15 menit. Input nama di-sanitasi untuk mencegah spreadsheet injection. Security headers diterapkan via middleware (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS).
+          <strong>Catatan:</strong> Sesi aktif ditentukan otomatis berdasarkan jam saat ini (WIB). Semua endpoint admin memerlukan JWT token via header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code>. Token berlaku 2 jam. Rate limit: login 5 percobaan/15 menit, register 5 req/2 menit, lapor pelanggaran 30 req/menit (semua per IP). Input nama di-sanitasi untuk mencegah spreadsheet injection. Security headers diterapkan via middleware (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS).
         </p>
       </div>
     </div>

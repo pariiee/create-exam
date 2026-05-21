@@ -44,11 +44,8 @@ export async function verifyToken(request: NextRequest): Promise<boolean> {
 }
 
 // --- Rate Limiting ---
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
-function getClientIp(request: NextRequest): string {
+export function getClientIp(request: NextRequest): string {
   // Prefer Next.js built-in ip (set by Vercel/platform, not spoofable)
   const platformIp = (request as unknown as { ip?: string }).ip;
   if (platformIp) return platformIp;
@@ -60,47 +57,59 @@ function getClientIp(request: NextRequest): string {
 }
 
 /**
- * Check if login attempt is allowed (rate limit).
- * Returns { allowed: true } or { allowed: false, retryAfterSeconds }.
+ * Create a reusable rate limiter with its own bucket.
+ * @param maxAttempts - max requests allowed within the window
+ * @param windowMs - time window in milliseconds
  */
-export function checkRateLimit(request: NextRequest): { allowed: boolean; retryAfterSeconds?: number } {
-  const ip = getClientIp(request);
-  const now = Date.now();
-  const entry = loginAttempts.get(ip);
+export function createRateLimiter(maxAttempts: number, windowMs: number) {
+  const attempts = new Map<string, { count: number; resetAt: number }>();
 
-  // Clean up expired entries
-  if (entry && now > entry.resetAt) {
-    loginAttempts.delete(ip);
+  function check(request: NextRequest): { allowed: boolean; retryAfterSeconds?: number } {
+    const ip = getClientIp(request);
+    const now = Date.now();
+    const entry = attempts.get(ip);
+
+    if (entry && now > entry.resetAt) {
+      attempts.delete(ip);
+    }
+
+    const current = attempts.get(ip);
+    if (current && current.count >= maxAttempts) {
+      const retryAfterSeconds = Math.ceil((current.resetAt - now) / 1000);
+      return { allowed: false, retryAfterSeconds };
+    }
+
+    return { allowed: true };
   }
 
-  const current = loginAttempts.get(ip);
-  if (current && current.count >= MAX_ATTEMPTS) {
-    const retryAfterSeconds = Math.ceil((current.resetAt - now) / 1000);
-    return { allowed: false, retryAfterSeconds };
+  function record(request: NextRequest): void {
+    const ip = getClientIp(request);
+    const now = Date.now();
+    const entry = attempts.get(ip);
+
+    if (entry && now <= entry.resetAt) {
+      entry.count++;
+    } else {
+      attempts.set(ip, { count: 1, resetAt: now + windowMs });
+    }
   }
 
-  return { allowed: true };
-}
-
-/**
- * Record a failed login attempt.
- */
-export function recordFailedAttempt(request: NextRequest): void {
-  const ip = getClientIp(request);
-  const now = Date.now();
-  const entry = loginAttempts.get(ip);
-
-  if (entry && now <= entry.resetAt) {
-    entry.count++;
-  } else {
-    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+  function clear(request: NextRequest): void {
+    const ip = getClientIp(request);
+    attempts.delete(ip);
   }
+
+  return { check, record, clear };
 }
 
-/**
- * Clear failed attempts after successful login.
- */
-export function clearAttempts(request: NextRequest): void {
-  const ip = getClientIp(request);
-  loginAttempts.delete(ip);
-}
+// Login rate limiter: 5 attempts per 15 minutes
+const loginLimiter = createRateLimiter(5, 15 * 60 * 1000);
+export const checkRateLimit = loginLimiter.check;
+export const recordFailedAttempt = loginLimiter.record;
+export const clearAttempts = loginLimiter.clear;
+
+// Register rate limiter: 5 requests per 2 minutes per IP
+export const registerLimiter = createRateLimiter(5, 2 * 60 * 1000);
+
+// Pelanggaran report rate limiter: 30 requests per minute per IP
+export const pelanggaranLimiter = createRateLimiter(30, 60 * 1000);

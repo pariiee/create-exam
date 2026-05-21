@@ -17,6 +17,7 @@ type PelanggaranItem = {
 const JENIS_BADGE: Record<string, { bg: string; text: string; label: string }> = {
   KELUAR_APP: { bg: "bg-red-500/15 border-red-500/30", text: "text-red-400", label: "Keluar App" },
   OVERLAY_TERDETEKSI: { bg: "bg-purple-500/15 border-purple-500/30", text: "text-purple-400", label: "Overlay" },
+  UNPIN_UJIAN: { bg: "bg-purple-500/15 border-purple-500/30", text: "text-purple-400", label: "Unpin" },
 };
 
 function formatTime(ts: string): string {
@@ -69,7 +70,11 @@ export default function PelanggaranPage() {
   const filtered = useMemo(() => {
     let result = data;
     if (filterSesi !== "all") result = result.filter((d) => d.sesi === parseInt(filterSesi, 10));
-    if (filterJenis !== "all") result = result.filter((d) => d.jenis === filterJenis);
+    if (filterJenis === "OVERLAY_UNPIN") {
+      result = result.filter((d) => d.jenis === "OVERLAY_TERDETEKSI" || d.jenis === "UNPIN_UJIAN");
+    } else if (filterJenis !== "all") {
+      result = result.filter((d) => d.jenis === filterJenis);
+    }
     if (filterKelas !== "all") result = result.filter((d) => d.kelas === filterKelas);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -166,8 +171,8 @@ export default function PelanggaranPage() {
           <p className="text-2xl font-bold text-red-400">{jenisCount["KELUAR_APP"] || 0}</p>
         </div>
         <div className="glass-card rounded-xl p-4">
-          <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Overlay</p>
-          <p className="text-2xl font-bold text-purple-400">{jenisCount["OVERLAY_TERDETEKSI"] || 0}</p>
+          <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Overlay / Unpin</p>
+          <p className="text-2xl font-bold text-purple-400">{(jenisCount["OVERLAY_TERDETEKSI"] || 0) + (jenisCount["UNPIN_UJIAN"] || 0)}</p>
         </div>
       </div>
 
@@ -204,7 +209,9 @@ export default function PelanggaranPage() {
             >
               <option value="all" className="bg-gray-900">Semua Jenis</option>
               <option value="KELUAR_APP" className="bg-gray-900">Keluar App</option>
+              <option value="OVERLAY_UNPIN" className="bg-gray-900">Overlay / Unpin</option>
               <option value="OVERLAY_TERDETEKSI" className="bg-gray-900">Overlay</option>
+              <option value="UNPIN_UJIAN" className="bg-gray-900">Unpin</option>
             </select>
           </div>
           <div>

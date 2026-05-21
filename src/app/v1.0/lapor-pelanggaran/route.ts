@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, appendToSheet, rewriteSheet, getSettingsSheetId } from "@/lib/sheets";
 import { google } from "googleapis";
+import { pelanggaranLimiter } from "@/lib/auth";
 
 const PELANGGARAN_SHEET = "PELANGGARAN";
 
@@ -44,10 +45,20 @@ async function ensurePelanggaranSheet() {
   }
 }
 
-const VALID_JENIS = ["KELUAR_APP", "OVERLAY_TERDETEKSI"];
+const VALID_JENIS = ["KELUAR_APP", "OVERLAY_TERDETEKSI", "UNPIN_UJIAN"];
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 30 requests per minute per IP
+    const rateCheck = pelanggaranLimiter.check(request);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, message: `Terlalu banyak request. Coba lagi dalam ${rateCheck.retryAfterSeconds} detik.` },
+        { status: 429 }
+      );
+    }
+    pelanggaranLimiter.record(request);
+
     const body = await request.json();
     const { nis, nama, kelas, sesi, jenis, alasan, foto_url } = body;
 
