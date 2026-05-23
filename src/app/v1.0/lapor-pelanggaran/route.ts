@@ -45,7 +45,7 @@ async function ensurePelanggaranSheet() {
   }
 }
 
-const VALID_JENIS = ["KELUAR_APP", "OVERLAY_TERDETEKSI", "UNPIN_UJIAN"];
+const VALID_JENIS = ["KELUAR_APP", "OVERLAY_TERDETEKSI", "UNPIN_UJIAN", "SPLIT_SCREEN"];
 
 export async function POST(request: NextRequest) {
   try {
