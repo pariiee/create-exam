@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+
+const PAGE_SIZE = 20;
 
 type PelanggaranItem = {
   timestamp: string;
@@ -41,27 +43,100 @@ export default function PelanggaranPage() {
   const [search, setSearch] = useState("");
   const [selectedNis, setSelectedNis] = useState<string | null>(null);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [sesiAktif, setSesiAktif] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+  const prevDataCountRef = useRef<number>(0);
+  const prevDataKeysRef = useRef<Set<string>>(new Set());
+  const notifPermissionRef = useRef<NotificationPermission>("default");
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const requestNotifPermission = useCallback(async () => {
+    if (!("Notification" in window)) return;
+    const permission = await Notification.requestPermission();
+    notifPermissionRef.current = permission;
+    setNotifPermission(permission);
+  }, []);
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      notifPermissionRef.current = Notification.permission;
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filterTanggal) params.set("tanggal", filterTanggal);
       const res = await fetch(`/v1.0/pelanggaran?${params.toString()}`);
       if (res.ok) {
         const d = await res.json();
-        setData(d.data || []);
+        const newData: PelanggaranItem[] = d.data || [];
+
+        // Detect new violations for notification
+        if (silent && newData.length > prevDataCountRef.current) {
+          const newItems = newData.filter(
+            (item) => !prevDataKeysRef.current.has(`${item.timestamp}-${item.nis}`)
+          );
+          newItems.forEach((item) => {
+            if (notifPermissionRef.current === "granted" && "Notification" in window) {
+              const badge = JENIS_BADGE[item.jenis];
+              new Notification("⚠️ Pelanggaran Baru!", {
+                body: `${item.nama} (${item.kelas}) — ${badge?.label ?? item.jenis}`,
+                icon: "/favicon.ico",
+              });
+            }
+          });
+        }
+
+        prevDataCountRef.current = newData.length;
+        prevDataKeysRef.current = new Set(newData.map((item) => `${item.timestamp}-${item.nis}`));
+        setData(newData);
       }
     } catch {
       // ignore
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [filterTanggal]);
 
+  // Check sesi aktif for auto-refresh decision
   useEffect(() => {
+    const checkSesi = async () => {
+      try {
+        const res = await fetch("/v1.0/sesi-ujian");
+        if (res.ok) {
+          const d = await res.json();
+          setSesiAktif(d.boleh_masuk === true);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    checkSesi();
+    const iv = setInterval(checkSesi, 60000);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    prevDataCountRef.current = 0;
+    prevDataKeysRef.current = new Set();
     fetchData();
   }, [fetchData]);
+
+  // Auto-refresh every 30 seconds when enabled
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const iv = setInterval(() => { if (!document.hidden) fetchData(true); }, 30000);
+    return () => clearInterval(iv);
+  }, [autoRefresh, fetchData]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSesi, filterJenis, filterKelas, filterTanggal, search]);
 
   const kelasList = useMemo(() => {
     const set = new Set(data.map((d) => d.kelas));
@@ -90,8 +165,8 @@ export default function PelanggaranPage() {
   }, [data, selectedNis]);
 
   // Summary counts
-  const sesi1Count = data.filter((d) => d.sesi === 1).length;
-  const sesi2Count = data.filter((d) => d.sesi === 2).length;
+  const sesi1Count = useMemo(() => data.filter((d) => d.sesi === 1).length, [data]);
+  const sesi2Count = useMemo(() => data.filter((d) => d.sesi === 2).length, [data]);
   const jenisCount = useMemo(() => {
     const map: Record<string, number> = {};
     for (const d of data) {
@@ -100,25 +175,40 @@ export default function PelanggaranPage() {
     return map;
   }, [data]);
 
-  function exportCSV() {
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
+
+  function csvField(val: string | number | undefined | null): string {
+    return `"${String(val ?? "").replace(/"/g, '""')}"`;
+  }
+
+  function exportCSV(sesiOverride?: number) {
+    const exportData = sesiOverride
+      ? data.filter((d) => d.sesi === sesiOverride)
+      : filtered;
+    const sesiLabel = sesiOverride ? `_sesi${sesiOverride}` : filterSesi !== "all" ? `_sesi${filterSesi}` : "";
     const headers = ["No", "Waktu", "NIS", "Nama", "Kelas", "Sesi", "Jenis", "Alasan", "Status"];
-    const rows = filtered.map((d, i) => [
+    const rows = exportData.map((d, i) => [
       i + 1,
-      d.timestamp,
-      d.nis,
-      d.nama,
-      d.kelas,
+      csvField(d.timestamp),
+      csvField(d.nis),
+      csvField(d.nama),
+      csvField(d.kelas),
       d.sesi,
-      d.jenis,
-      `"${(d.alasan || "").replace(/"/g, '""')}"`,
-      d.status,
+      csvField(d.jenis),
+      csvField(d.alasan),
+      csvField(d.status),
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pelanggaran_${filterTanggal || "all"}.csv`;
+    a.download = `pelanggaran_${filterTanggal || "all"}${sesiLabel}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -139,17 +229,55 @@ export default function PelanggaranPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Rekap Pelanggaran</h1>
-          <p className="text-gray-400 mt-1">Data pelanggaran siswa saat ujian</p>
+          <p className="text-gray-400 mt-1">
+            Data pelanggaran siswa saat ujian
+            {sesiAktif && <span className="ml-2 inline-flex items-center gap-1 text-emerald-400 text-xs"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />Sesi berlangsung</span>}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchData} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-sm font-medium transition-all">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Notification button */}
+          {"Notification" in (typeof window !== "undefined" ? window : {}) && notifPermission !== "granted" && (
+            <button
+              onClick={requestNotifPermission}
+              className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-300 hover:bg-amber-600/30 text-sm font-medium transition-all"
+              title="Aktifkan notifikasi pelanggaran baru"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+              Notifikasi
+            </button>
+          )}
+          {notifPermission === "granted" && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+              Notif Aktif
+            </span>
+          )}
+          {/* Auto-refresh toggle */}
+          <button
+            onClick={() => setAutoRefresh((v) => !v)}
+            className={`inline-flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${autoRefresh ? "bg-emerald-600/20 border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"}`}
+            title={autoRefresh ? "Auto-refresh aktif (30 detik)" : "Aktifkan auto-refresh"}
+          >
+            <svg className={`w-4 h-4 ${autoRefresh ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={autoRefresh ? { animationDuration: "3s" } : {}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            {autoRefresh ? "Auto ON" : "Auto OFF"}
+          </button>
+          <button onClick={() => fetchData()} className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 text-sm font-medium transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             Refresh
           </button>
-          <button onClick={exportCSV} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 text-sm font-medium transition-all">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Export CSV
-          </button>
+          {/* Export dropdown */}
+          <div className="relative group">
+            <button className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 text-sm font-medium transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-44 glass-card rounded-xl border border-white/10 shadow-xl z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              <button onClick={() => exportCSV()} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-t-xl transition-colors">Filter saat ini</button>
+              <button onClick={() => exportCSV(1)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors">Sesi 1 saja</button>
+              <button onClick={() => exportCSV(2)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-b-xl transition-colors">Sesi 2 saja</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -264,11 +392,12 @@ export default function PelanggaranPage() {
               {filtered.length === 0 ? (
                 <tr><td colSpan={10} className="text-center py-12 text-gray-500">Tidak ada data pelanggaran.</td></tr>
               ) : (
-                filtered.map((d, i) => {
+                paginated.map((d, i) => {
                   const badge = JENIS_BADGE[d.jenis] || { bg: "bg-gray-500/15 border-gray-500/30", text: "text-gray-400", label: d.jenis };
+                  const globalIndex = (currentPage - 1) * PAGE_SIZE + i + 1;
                   return (
                     <tr key={`${d.timestamp}-${d.nis}-${i}`} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-4 text-gray-500">{i + 1}</td>
+                      <td className="py-3 px-4 text-gray-500">{globalIndex}</td>
                       <td className="py-3 px-4 font-mono text-gray-300 text-xs">{formatTime(d.timestamp)}</td>
                       <td className="py-3 px-4">
                         <button
@@ -318,8 +447,42 @@ export default function PelanggaranPage() {
           </table>
         </div>
         {filtered.length > 0 && (
-          <div className="px-4 py-3 border-t border-white/5 text-xs text-gray-500">
-            Menampilkan {filtered.length} dari {data.length} pelanggaran
+          <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-xs text-gray-500">
+              Menampilkan {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} dari {filtered.length} pelanggaran
+            </p>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition-all"
+                >‹</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-gray-600 text-xs">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setCurrentPage(p as number)}
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${currentPage === p ? "bg-indigo-600/30 border-indigo-500/40 text-indigo-300" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"}`}
+                      >{p}</button>
+                    )
+                  )}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition-all"
+                >›</button>
+              </div>
+            )}
           </div>
         )}
       </div>
