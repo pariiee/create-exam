@@ -97,10 +97,23 @@ export default function Home() {
   const checkNisDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
+    // Fetch settings for URL download
     fetch("/exam-info")
       .then((r) => safeJson<{ url_download_apk?: string }>(r))
       .then((d) => setDownloadApkUrl(d.url_download_apk || ""))
       .catch(() => {});
+
+    // Check if APK file exists directly
+    fetch("/api/apk-info")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.exists) {
+          // Automatically use /app.apk if file exists
+          setDownloadApkUrl("/app.apk");
+        }
+      })
+      .catch(() => {});
+
     fetchTotalUsers();
   }, []);
 

@@ -105,7 +105,7 @@ export default function AdminSettingsPage() {
   // Fetch APK info
   const fetchApkInfo = async () => {
     try {
-      const res = await fetch("/api/admin/apk-info");
+      const res = await fetch("/api/apk-info");
       if (res.ok) {
         const data = await res.json();
         setApkInfo(data);
