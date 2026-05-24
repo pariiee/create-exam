@@ -4,16 +4,31 @@ import path from "path";
 
 export async function GET(request: NextRequest) {
   try {
-    const apkPath = path.join(process.cwd(), "public", "app.apk");
+    const publicDir = path.join(process.cwd(), "public");
     
-    // Check if file exists
-    if (!fs.existsSync(apkPath)) {
+    // Check if public directory exists
+    if (!fs.existsSync(publicDir)) {
       return NextResponse.json({ 
         exists: false,
-        message: "File APK tidak ditemukan" 
+        message: "Public directory tidak ditemukan" 
       });
     }
 
+    // Read all files in public directory
+    const files = fs.readdirSync(publicDir);
+    
+    // Find any .apk file (case insensitive)
+    const apkFile = files.find(file => file.toLowerCase().endsWith('.apk'));
+    
+    if (!apkFile) {
+      return NextResponse.json({ 
+        exists: false,
+        message: "File APK tidak ditemukan di folder public" 
+      });
+    }
+
+    const apkPath = path.join(publicDir, apkFile);
+    
     // Get file stats
     const stats = fs.statSync(apkPath);
     
@@ -37,11 +52,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       exists: true,
-      path: "/app.apk",
+      path: `/${apkFile}`,
       size: formatSize(stats.size),
       sizeBytes: stats.size,
       lastModified: lastModified,
-      fileName: "app.apk"
+      fileName: apkFile
     });
   } catch (error: unknown) {
     console.error("[APK Info Error]", error);

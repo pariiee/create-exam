@@ -406,12 +406,12 @@ export default function AdminSettingsPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">URL / Path Download</label>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">URL / Path Download (Otomatis dideteksi dari folder public)</label>
               <input
                 type="text"
                 value={formSettings.url_download_apk}
                 onChange={(e) => setFormSettings({ ...formSettings, url_download_apk: e.target.value })}
-                placeholder="Masukkan /app.apk atau link Google Drive"
+                placeholder="Nama file APK otomatis dideteksi dari folder public, atau masukkan link external"
                 className="input-glow w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all duration-200"
               />
             </div>
@@ -488,16 +488,16 @@ export default function AdminSettingsPage() {
                   Untuk menyediakan direct download APK berukuran besar di Vercel, letakkan file APK di dalam folder proyek.
                 </p>
                 <ol className="list-decimal pl-4 space-y-1.5 text-xs text-gray-400">
-                  <li>Ganti nama file APK menjadi <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">app.apk</code></li>
-                  <li>Letakkan di folder: <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">public/app.apk</code></li>
+                  <li>Letakkan file APK di folder proyek: <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">public/[nama-file].apk</code></li>
+                  <li>Nama file APK bebas (contoh: ExamCoy.apk, app.apk, ujian.apk, dll)</li>
                   <li>Commit & push ke GitHub:
                     <pre className="mt-1 p-2 rounded bg-black/40 text-gray-300 font-mono text-[10px] overflow-x-auto">
-                      git add public/app.apk{"\n"}
+                      git add public/*.apk{"\n"}
                       git commit -m "add apk file"{"\n"}
                       git push origin main
                     </pre>
                   </li>
-                  <li>Set input URL di atas menjadi <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">/app.apk</code></li>
+                  <li>Sistem akan otomatis mendeteksi file APK yang ada</li>
                 </ol>
               </div>
             )}

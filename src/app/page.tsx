@@ -122,9 +122,9 @@ export default function Home() {
       .then((d) => {
         console.log("[APK Check] Response:", d);
         if (d.exists) {
-          // Automatically use /app.apk if file exists
-          console.log("[APK Check] APK file exists, using /app.apk");
-          setDownloadApkUrl("/app.apk");
+          // Automatically use the detected APK file path
+          console.log("[APK Check] APK file exists, using:", d.path);
+          setDownloadApkUrl(d.path);
         } else {
           // If APK doesn't exist, fetch settings for external URL
           console.log("[APK Check] APK file not found, fetching settings for external URL");
