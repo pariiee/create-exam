@@ -13,6 +13,16 @@ type SettingsState = {
   sesi_2_selesai: string;
 };
 
+type ApkInfo = {
+  exists: boolean;
+  path?: string;
+  size?: string;
+  sizeBytes?: number;
+  lastModified?: string;
+  fileName?: string;
+  message?: string;
+};
+
 export default function AdminSettingsPage() {
   // Separate saved state (from server) and form state (local changes)
   const [savedSettings, setSavedSettings] = useState<SettingsState | null>(null);
@@ -31,6 +41,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [togglingPin, setTogglingPin] = useState(false);
+  const [apkInfo, setApkInfo] = useState<ApkInfo | null>(null);
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
 
@@ -91,9 +102,23 @@ export default function AdminSettingsPage() {
     }
   }, []);
 
+  // Fetch APK info
+  const fetchApkInfo = async () => {
+    try {
+      const res = await fetch("/api/admin/apk-info");
+      if (res.ok) {
+        const data = await res.json();
+        setApkInfo(data);
+      }
+    } catch (err) {
+      console.error("[Fetch APK Info Error]", err);
+    }
+  };
+
   // Initial load
   useEffect(() => {
     fetchSettings();
+    fetchApkInfo();
   }, [fetchSettings]);
 
   // Auto-save PIN toggle
@@ -391,30 +416,91 @@ export default function AdminSettingsPage() {
               />
             </div>
 
-            {/* Panduan Vercel */}
-            <div className="p-4 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/10 text-sm">
-              <h4 className="font-semibold text-emerald-400 flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Rekomendasi Host APK di Vercel (Gratis & Direct Download)
-              </h4>
-              <p className="text-gray-300 text-xs leading-relaxed mb-3">
-                Karena Vercel membatasi upload file dinamis maksimal 4.5 MB, cara terbaik untuk menyediakan direct download APK berukuran besar adalah dengan meletakkannya langsung di dalam folder proyek.
-              </p>
-              <ol className="list-decimal pl-4 space-y-1.5 text-xs text-gray-400">
-                <li>Ganti nama file APK baru kamu menjadi <code className="text-emerald-300 font-mono bg-emerald-500/10 px-1 py-0.5 rounded">app.apk</code></li>
-                <li>Letakkan file tersebut di dalam folder proyek di laptop: <code className="text-emerald-300 font-mono bg-emerald-500/10 px-1 py-0.5 rounded">public/app.apk</code></li>
-                <li>Lakukan commit & push ke GitHub:
-                  <pre className="mt-1 p-2 rounded bg-black/40 text-gray-300 font-mono text-[10px] overflow-x-auto">
-                    git add public/app.apk{"\n"}
-                    git commit -m "update aplikasi apk"{"\n"}
-                    git push origin main
-                  </pre>
-                </li>
-                <li>Set input URL di atas menjadi <code className="text-emerald-300 font-mono bg-emerald-500/10 px-1 py-0.5 rounded">/app.apk</code> lalu klik simpan di bawah.</li>
-              </ol>
-            </div>
+            {/* APK Info / Panduan */}
+            {apkInfo?.exists ? (
+              <div className="p-4 rounded-xl bg-emerald-500/[0.03] border border-emerald-500/10 text-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-emerald-400 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    INFORMATION
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={fetchApkInfo}
+                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-all"
+                    title="Refresh info"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">File Name:</span>
+                    <span className="text-white font-medium">{apkInfo.fileName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Size:</span>
+                    <span className="text-white font-medium">{apkInfo.size}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Path:</span>
+                    <span className="text-emerald-300 font-mono">{apkInfo.path}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Last Modified:</span>
+                    <span className="text-white font-medium">{apkInfo.lastModified}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Package:</span>
+                    <span className="text-white font-medium">com.examcoy.app</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Version:</span>
+                    <span className="text-white font-medium">1.0.0</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-amber-500/[0.03] border border-amber-500/10 text-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-amber-400 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    File APK Belum Tersedia
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={fetchApkInfo}
+                    className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all"
+                    title="Cek ulang"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-gray-300 text-xs leading-relaxed mb-3">
+                  Untuk menyediakan direct download APK berukuran besar di Vercel, letakkan file APK di dalam folder proyek.
+                </p>
+                <ol className="list-decimal pl-4 space-y-1.5 text-xs text-gray-400">
+                  <li>Ganti nama file APK menjadi <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">app.apk</code></li>
+                  <li>Letakkan di folder: <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">public/app.apk</code></li>
+                  <li>Commit & push ke GitHub:
+                    <pre className="mt-1 p-2 rounded bg-black/40 text-gray-300 font-mono text-[10px] overflow-x-auto">
+                      git add public/app.apk{"\n"}
+                      git commit -m "add apk file"{"\n"}
+                      git push origin main
+                    </pre>
+                  </li>
+                  <li>Set input URL di atas menjadi <code className="text-amber-300 font-mono bg-amber-500/10 px-1 py-0.5 rounded">/app.apk</code></li>
+                </ol>
+              </div>
+            )}
           </div>
         </div>
 
