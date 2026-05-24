@@ -50,6 +50,9 @@ export default function PelanggaranPage() {
   const prevDataCountRef = useRef<number>(0);
   const prevDataKeysRef = useRef<Set<string>>(new Set());
   const notifPermissionRef = useRef<NotificationPermission>("default");
+  const [showExport, setShowExport] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const requestNotifPermission = useCallback(async () => {
     if (!("Notification" in window)) return;
@@ -64,6 +67,17 @@ export default function PelanggaranPage() {
       setNotifPermission(Notification.permission);
     }
   }, []);
+
+  useEffect(() => {
+    if (!showExport) return;
+    const handleClick = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setShowExport(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showExport]);
 
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -93,10 +107,13 @@ export default function PelanggaranPage() {
 
         prevDataCountRef.current = newData.length;
         prevDataKeysRef.current = new Set(newData.map((item) => `${item.timestamp}-${item.nis}`));
+        setError(null);
         setData(newData);
+      } else {
+        if (!silent) setError("Gagal memuat data. Periksa koneksi atau coba refresh.");
       }
     } catch {
-      // ignore
+      if (!silent) setError("Gagal memuat data. Periksa koneksi atau coba refresh.");
     } finally {
       if (!silent) setLoading(false);
     }
@@ -204,7 +221,7 @@ export default function PelanggaranPage() {
       csvField(d.status),
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -266,20 +283,36 @@ export default function PelanggaranPage() {
             Refresh
           </button>
           {/* Export dropdown */}
-          <div className="relative group">
-            <button className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 text-sm font-medium transition-all">
+          <div className="relative" ref={exportRef}>
+            <button
+              onClick={() => setShowExport((v) => !v)}
+              className="inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 text-sm font-medium transition-all"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Export
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              <svg className={`w-3 h-3 transition-transform ${showExport ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-44 glass-card rounded-xl border border-white/10 shadow-xl z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-              <button onClick={() => exportCSV()} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-t-xl transition-colors">Filter saat ini</button>
-              <button onClick={() => exportCSV(1)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors">Sesi 1 saja</button>
-              <button onClick={() => exportCSV(2)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-b-xl transition-colors">Sesi 2 saja</button>
-            </div>
+            {showExport && (
+              <div className="absolute right-0 top-full mt-1 w-44 glass-card rounded-xl border border-white/10 shadow-xl z-10">
+                <button onClick={() => { exportCSV(); setShowExport(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-t-xl transition-colors">Filter saat ini</button>
+                <button onClick={() => { exportCSV(1); setShowExport(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 transition-colors">Sesi 1 saja</button>
+                <button onClick={() => { exportCSV(2); setShowExport(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 rounded-b-xl transition-colors">Sesi 2 saja</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="hover:text-red-300 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">

@@ -31,6 +31,8 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [togglingPin, setTogglingPin] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const getToken = () => sessionStorage.getItem("admin_token") || "";
 
@@ -230,6 +232,56 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function handleApkUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".apk")) {
+      setUploadMsg({ type: "error", text: "Format file harus .apk!" });
+      return;
+    }
+
+    setUploading(true);
+    setUploadMsg(null);
+
+    try {
+      const token = getToken();
+      if (!token) throw new Error("Token tidak ditemukan");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/upload-apk", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (res.status === 401) {
+        sessionStorage.removeItem("admin_token");
+        window.location.reload();
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengunggah file");
+
+      setUploadMsg({ type: "success", text: "File APK berhasil diunggah!" });
+      
+      // Update local settings so UI updates
+      setFormSettings(prev => ({ ...prev, url_download_apk: data.url || "/app.apk" }));
+      setSavedSettings(prev => prev ? { ...prev, url_download_apk: data.url || "/app.apk" } : null);
+    } catch (err) {
+      console.error("[Upload APK Error]", err);
+      setUploadMsg({ type: "error", text: err instanceof Error ? err.message : "Gagal mengunggah" });
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
@@ -365,7 +417,7 @@ export default function AdminSettingsPage() {
           />
         </div>
 
-        {/* URL Download APK */}
+        {/* Upload File APK */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -374,17 +426,86 @@ export default function AdminSettingsPage() {
               </svg>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">URL Download APK</h3>
-              <p className="text-gray-400 text-sm">Link download APK untuk tombol di landing page</p>
+              <h3 className="text-lg font-semibold text-white">Upload APK Aplikasi</h3>
+              <p className="text-gray-400 text-sm">Upload file APK ujian agar user bisa langsung download dari web</p>
             </div>
           </div>
-          <input
-            type="url"
-            value={formSettings.url_download_apk}
-            onChange={(e) => setFormSettings({ ...formSettings, url_download_apk: e.target.value })}
-            placeholder="https://drive.google.com/file/d/.../view"
-            className="input-glow w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all duration-200"
-          />
+
+          <div className="space-y-4">
+            {/* Status APK Saat Ini */}
+            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-sm">
+              <div>
+                <p className="text-gray-400">Status File:</p>
+                <div className="text-white font-medium mt-0.5 max-w-[280px] sm:max-w-[400px] truncate">
+                  {formSettings.url_download_apk === "/app.apk" 
+                    ? "✓ File APK tersedia di server" 
+                    : formSettings.url_download_apk 
+                    ? `✓ Menggunakan link: ${formSettings.url_download_apk}`
+                    : "✕ Belum ada file APK yang di-upload"}
+                </div>
+              </div>
+              {formSettings.url_download_apk && (
+                <a 
+                  href={formSettings.url_download_apk} 
+                  download="examcoy.apk"
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-all shrink-0"
+                >
+                  Coba Download
+                </a>
+              )}
+            </div>
+
+            {/* Input File Dropzone/Button */}
+            <div className="relative">
+              <input
+                type="file"
+                accept=".apk"
+                onChange={handleApkUpload}
+                disabled={uploading}
+                id="apk-file-input"
+                className="hidden"
+              />
+              <label
+                htmlFor="apk-file-input"
+                className={`flex flex-col items-center justify-center w-full h-32 px-4 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
+                  uploading 
+                    ? "border-emerald-500/30 bg-emerald-500/5 cursor-not-allowed" 
+                    : "border-white/10 bg-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/5"
+                }`}
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                  {uploading ? (
+                    <>
+                      <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mb-3" />
+                      <p className="text-sm font-semibold text-emerald-300">Mengunggah file APK...</p>
+                      <p className="text-xs text-gray-400 mt-1">Harap tunggu hingga proses selesai</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-8 h-8 text-gray-400 group-hover:text-emerald-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <p className="text-sm font-semibold text-white">Klik untuk memilih file APK</p>
+                      <p className="text-xs text-gray-400 mt-1">Hanya menerima file .apk</p>
+                    </>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Upload Message */}
+            {uploadMsg && (
+              <div
+                className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                  uploadMsg.type === "success"
+                    ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-300"
+                    : "bg-red-500/10 border border-red-500/20 text-red-300"
+                }`}
+              >
+                <span>{uploadMsg.text}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Divider */}
