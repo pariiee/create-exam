@@ -24,6 +24,24 @@ export default function Home() {
   // Download APK URL
   const [downloadApkUrl, setDownloadApkUrl] = useState("");
 
+  // Handle APK download with redirect
+  const handleDownloadApk = () => {
+    if (downloadApkUrl) {
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = downloadApkUrl;
+      link.download = 'examcoy.apk';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Redirect to home after short delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    }
+  };
+
   // Total users count
   const [totalUsers, setTotalUsers] = useState(0);
 
@@ -97,22 +115,38 @@ export default function Home() {
   const checkNisDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    // Fetch settings for URL download
-    fetch("/exam-info")
-      .then((r) => safeJson<{ url_download_apk?: string }>(r))
-      .then((d) => setDownloadApkUrl(d.url_download_apk || ""))
-      .catch(() => {});
-
-    // Check if APK file exists directly
+    // Check if APK file exists directly first
+    console.log("[APK Check] Starting APK file check...");
     fetch("/api/apk-info")
       .then((r) => r.json())
       .then((d) => {
+        console.log("[APK Check] Response:", d);
         if (d.exists) {
           // Automatically use /app.apk if file exists
+          console.log("[APK Check] APK file exists, using /app.apk");
           setDownloadApkUrl("/app.apk");
+        } else {
+          // If APK doesn't exist, fetch settings for external URL
+          console.log("[APK Check] APK file not found, fetching settings for external URL");
+          return fetch("/exam-info")
+            .then((r) => safeJson<{ url_download_apk?: string }>(r))
+            .then((d) => {
+              console.log("[APK Check] Settings response:", d);
+              setDownloadApkUrl(d.url_download_apk || "");
+            });
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[APK Check] Error checking APK:", err);
+        // On error, fallback to settings
+        fetch("/exam-info")
+          .then((r) => safeJson<{ url_download_apk?: string }>(r))
+          .then((d) => {
+            console.log("[APK Check] Fallback settings:", d);
+            setDownloadApkUrl(d.url_download_apk || "");
+          })
+          .catch(() => {});
+      });
 
     fetchTotalUsers();
   }, []);
@@ -372,14 +406,14 @@ export default function Home() {
               {/* Download APK */}
               {downloadApkUrl && (
                 <div className="mt-5 flex justify-center lg:justify-start">
-                  <a 
-                    href={downloadApkUrl} 
-                    download="examcoy.apk" 
+                  <button 
+                    type="button"
+                    onClick={handleDownloadApk}
                     className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl bg-emerald-600/15 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-600/25 hover:text-emerald-200 transition-all duration-300 hover:-translate-y-0.5"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Download APK
-                  </a>
+                  </button>
                 </div>
               )}
 
@@ -578,10 +612,14 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-white mb-2">Install APK</h3>
                 <p className="text-gray-400 text-sm leading-relaxed mb-5">Download dan install aplikasi ExamCoy di HP kamu untuk mengikuti ujian.</p>
                 {downloadApkUrl ? (
-                  <a href={downloadApkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600/15 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-600/25 hover:text-emerald-200 transition-all duration-300">
+                  <button 
+                    type="button"
+                    onClick={handleDownloadApk}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600/15 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-600/25 hover:text-emerald-200 transition-all duration-300"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Download APK
-                  </a>
+                  </button>
                 ) : (
                   <span className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl bg-white/5 border border-white/10 text-gray-500">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" /></svg>
