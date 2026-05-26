@@ -5,17 +5,17 @@ import path from "path";
 export async function GET(request: NextRequest) {
   try {
     const publicDir = path.join(process.cwd(), "public");
-    
-    // Check if public directory exists
-    if (!fs.existsSync(publicDir)) {
-      return NextResponse.json({ 
+
+    // Read all files in public directory (async to avoid blocking)
+    let files: string[];
+    try {
+      files = await fs.promises.readdir(publicDir);
+    } catch {
+      return NextResponse.json({
         exists: false,
-        message: "Public directory tidak ditemukan" 
+        message: "Public directory tidak ditemukan",
       });
     }
-
-    // Read all files in public directory
-    const files = fs.readdirSync(publicDir);
     
     // Find any .apk file (case insensitive)
     const apkFile = files.find(file => file.toLowerCase().endsWith('.apk'));
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const apkPath = path.join(publicDir, apkFile);
     
     // Get file stats
-    const stats = fs.statSync(apkPath);
+    const stats = await fs.promises.stat(apkPath);
     
     // Format file size
     const formatSize = (bytes: number): string => {

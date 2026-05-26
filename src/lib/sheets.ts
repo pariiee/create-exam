@@ -2,6 +2,17 @@ import { google } from "googleapis";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
+// In-process write lock to reduce race conditions between concurrent requests.
+// Note: still per server instance; for multi-instance deployments you may need a distributed lock.
+const sheetWriteLocks = new Map<string, Promise<void>>();
+
+function withSheetWriteLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = sheetWriteLocks.get(key) ?? Promise.resolve();
+  const run = prev.then(() => fn());
+  sheetWriteLocks.set(key, run.then(() => undefined, () => undefined));
+  return run;
+}
+
 function getAuth() {
   let credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!credentialsJson) {
@@ -46,11 +57,16 @@ export function getSettingsSheetId(): string {
 /**
  * Read all rows from a sheet tab.
  */
-export async function getSheetData(sheetName: string, spreadsheetIdOverride?: string): Promise<string[][]> {
+export async function getSheetData(
+  sheetName: string,
+  spreadsheetIdOverride?: string,
+  rangeOverride?: string
+): Promise<string[][]> {
   const sheets = getSheets();
+  const range = rangeOverride ? `${sheetName}!${rangeOverride}` : sheetName;
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetIdOverride || getSpreadsheetId(),
-    range: sheetName,
+    range,
   });
   return (res.data.values as string[][]) || [];
 }
@@ -62,24 +78,27 @@ export async function rewriteSheet(sheetName: string, rows: (string | number)[][
   const sheets = getSheets();
   const spreadsheetId = spreadsheetIdOverride || getSpreadsheetId();
 
-  // Clear existing data
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId,
-    range: sheetName,
-    requestBody: {},
-  });
-
-  // Write new data
-  if (rows.length > 0) {
-    await sheets.spreadsheets.values.update({
+  const lockKey = `${spreadsheetId}:${sheetName}`;
+  await withSheetWriteLock(lockKey, async () => {
+    // Clear existing data
+    await sheets.spreadsheets.values.clear({
       spreadsheetId,
       range: sheetName,
-      valueInputOption: "RAW",
-      requestBody: {
-        values: rows,
-      },
+      requestBody: {},
     });
-  }
+
+    // Write new data
+    if (rows.length > 0) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: sheetName,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: rows,
+        },
+      });
+    }
+  });
 }
 
 /**
@@ -89,14 +108,17 @@ export async function appendToSheet(sheetName: string, rows: (string | number)[]
   const sheets = getSheets();
   const spreadsheetId = spreadsheetIdOverride || getSpreadsheetId();
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: sheetName,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: {
-      values: rows,
-    },
+  const lockKey = `${spreadsheetId}:${sheetName}`;
+  await withSheetWriteLock(lockKey, async () => {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: sheetName,
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
+      requestBody: {
+        values: rows,
+      },
+    });
   });
 }
 

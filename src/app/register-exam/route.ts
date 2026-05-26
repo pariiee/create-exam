@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sheets";
 import { registerLimiter } from "@/lib/auth";
+import { sanitizeInput } from "@/lib/sanitize";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,22 +29,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Kelas yang dipilih tidak valid." }, { status: 400 });
     }
 
+    const safeNama = sanitizeInput(nama);
+    if (safeNama.length === 0) {
+      return NextResponse.json({ error: "Nama mengandung karakter tidak valid." }, { status: 400 });
+    }
+
     const sheetName = resolveSheetName(kelas);
 
     // Check NIS uniqueness across ALL class sheets
     const ALL_SHEETS = ["KELAS X", "KELAS XI", "KELAS XII"];
     for (const sheet of ALL_SHEETS) {
       try {
-        const rows = await getSheetData(sheet);
+        // Only read needed columns: B (NIS), C (NAMA), D (KELAS)
+        const rows = await getSheetData(sheet, undefined, "B:D");
         for (let i = 1; i < rows.length; i++) {
-          const rowNis = String(rows[i][1] ?? "").trim();
+          const rowNis = String(rows[i][0] ?? "").trim();
           if (rowNis === nis.trim()) {
             return NextResponse.json({
               error: "NIS nya udah terdaftar nih",
               duplicate: {
                 nis: rowNis,
-                nama: rows[i][2] ?? "",
-                kelas: rows[i][3] ?? "",
+                nama: rows[i][1] ?? "",
+                kelas: rows[i][2] ?? "",
                 sheet,
               },
             }, { status: 409 });
@@ -55,26 +62,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Read existing data (including header)
-    const allRows = await getSheetData(sheetName);
-    const header = allRows.length > 0 ? allRows[0] : ["NO", "NIS", "NAMA", "KELAS"];
+    const allRows = await getSheetData(sheetName, undefined, "B:D");
+    const headerRow = allRows.length > 0 ? allRows[0] : ["NIS", "NAMA", "KELAS"];
+    const header = [
+      "NO",
+      headerRow[0] ?? "NIS",
+      headerRow[1] ?? "NAMA",
+      headerRow[2] ?? "KELAS",
+    ];
     const dataRows = allRows.slice(1);
 
     // Collect existing data (skip empty rows)
     const existing: { nis: string; nama: string; kelas: string }[] = [];
     for (const row of dataRows) {
-      const rowNis = row[1] ?? "";
+      const rowNis = row[0] ?? "";
       if (rowNis === "") continue;
       existing.push({
         nis: String(rowNis),
-        nama: row[2] ?? "",
-        kelas: row[3] ?? "",
+        nama: row[1] ?? "",
+        kelas: row[2] ?? "",
       });
     }
 
     // Add new entry
     existing.push({
       nis: nis.trim(),
-      nama: nama.trim(),
+      nama: safeNama,
       kelas,
     });
 

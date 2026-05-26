@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSheetData, rewriteSheet, resolveSheetName, allKelas } from "@/lib/sheets";
 import { verifyToken } from "@/lib/auth";
+import { sanitizeInput } from "@/lib/sanitize";
 
 const SHEETS = ["KELAS X", "KELAS XI", "KELAS XII"];
 const MAX_NAMA_LENGTH = 100;
-
-// Sanitize input to prevent spreadsheet formula injection
-function sanitizeInput(value: string): string {
-  let sanitized = value.trim();
-  // Strip leading characters that trigger formula execution in spreadsheets
-  while (/^[=+\-@\t\r]/.test(sanitized)) {
-    sanitized = sanitized.slice(1);
-  }
-  return sanitized;
-}
 
 // GET - fetch all students
 export async function GET(request: NextRequest) {

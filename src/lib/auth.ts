@@ -3,10 +3,11 @@ import { NextRequest } from "next/server";
 
 const TOKEN_EXPIRY = "2h";
 
-function getSecret(): Uint8Array {
-  const key = process.env.ENCRYPTION_KEY;
+function getJwtSecret(): Uint8Array {
+  // Prefer a dedicated JWT secret. For backward compatibility we fallback to ENCRYPTION_KEY.
+  const key = process.env.JWT_SECRET ?? process.env.ENCRYPTION_KEY;
   if (!key) {
-    throw new Error("ENCRYPTION_KEY environment variable is not set");
+    throw new Error("JWT_SECRET environment variable is not set (and ENCRYPTION_KEY fallback is missing)");
   }
   return new TextEncoder().encode(key);
 }
@@ -21,7 +22,7 @@ export async function signToken(): Promise<string> {
     .setIssuer("examcoy")
     .setAudience("examcoy-admin")
     .setExpirationTime(TOKEN_EXPIRY)
-    .sign(getSecret());
+    .sign(getJwtSecret());
 }
 
 /**
@@ -33,7 +34,7 @@ export async function verifyToken(request: NextRequest): Promise<boolean> {
   if (!auth || !auth.startsWith("Bearer ")) return false;
   try {
     const token = auth.slice(7);
-    await jwtVerify(token, getSecret(), {
+    await jwtVerify(token, getJwtSecret(), {
       issuer: "examcoy",
       audience: "examcoy-admin",
     });

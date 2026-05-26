@@ -15,15 +15,16 @@ export async function POST(request: NextRequest) {
     const results: { nama: string; nis: string; kelas: string }[] = [];
 
     for (const sheetName of sheetNames) {
-      const rows = await getSheetData(sheetName);
+      // Only read needed columns: B (NIS), C (NAMA), D (KELAS)
+      const rows = await getSheetData(sheetName, undefined, "B:D");
       // Skip header row
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row[1] && String(row[1]) === String(nis)) {
+        if (row[0] && String(row[0]) === String(nis)) {
           results.push({
-            nama: row[2] ?? "-",
-            nis: row[1] ?? "-",
-            kelas: row[3] ?? "-",
+            nama: row[1] ?? "-",
+            nis: row[0] ?? "-",
+            kelas: row[2] ?? "-",
           });
         }
       }
